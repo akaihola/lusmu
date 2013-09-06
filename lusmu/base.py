@@ -1,7 +1,7 @@
 import logging
 
 
-log = logging.getLogger('slacker.base')
+log = logging.getLogger('lusmu.base')
 
 
 _triggered_cache = {}

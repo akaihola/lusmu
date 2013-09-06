@@ -1,8 +1,8 @@
 from unittest import TestCase
-from slacker.base import (DIRTY,
-                          Node,
-                          update_nodes_get_triggered,
-                          _triggered_cache)
+from lusmu.base import (DIRTY,
+                        Node,
+                        update_nodes_get_triggered,
+                        _triggered_cache)
 
 
 class IncompleteNode(Node):
