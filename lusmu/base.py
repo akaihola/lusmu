@@ -1,3 +1,4 @@
+import itertools
 import logging
 
 
@@ -8,11 +9,16 @@ _triggered_cache = {}
 
 
 class DIRTY:
-    pass
+    def __str__(self):
+        return 'DIRTY'
+DIRTY = DIRTY()
 
 
 class Node(object):
-    def __init__(self, name, triggered=False):
+    def __init__(self, name,
+                 action=None,
+                 inputs=((), None),
+                 triggered=False):
         """Initialize a node
 
         Arguments:
@@ -22,9 +28,27 @@ class Node(object):
 
         """
         self.name = name
+        self._action = action
         self._value = DIRTY
         self._dependents = set()
         self.triggered = triggered
+        self._positional_inputs = ()
+        self._keyword_inputs = {}
+        self.set_inputs(*inputs[0], **inputs[1] or {})
+
+    def set_inputs(self, *args, **kwargs):
+        """Replace current positional and keyword inputs"""
+        for node in self._iterate_inputs():
+            node.disconnect(self)
+        self._positional_inputs = args
+        self._keyword_inputs = kwargs
+        for node in self._iterate_inputs():
+            node.connect(self)
+
+    def _iterate_inputs(self):
+        """Iterate through positional and keyword inputs"""
+        return itertools.chain(self._positional_inputs,
+                               self._keyword_inputs.itervalues())
 
     def connect(self, dependent):
         """Set the given node as a dependent of this node
@@ -39,7 +63,22 @@ class Node(object):
             self._dependents.add(dependent)
             if self._value is not DIRTY:
                 dependent.set_value(DIRTY, make_cache=False)
-        _triggered_cache.clear()
+            _triggered_cache.clear()
+
+    def disconnect(self, dependent):
+        """Remove the given node from the set of dependents of this node
+
+        Immediately paints the removed dependent dirty if this node has
+        previously been evaluated.
+
+        Disconnecting nodes always invalidates the triggered nodes cache.
+
+        """
+        if dependent in self._dependents:
+            self._dependents.remove(dependent)
+            if self._value is not DIRTY:
+                dependent.set_value(DIRTY, make_cache=False)
+            _triggered_cache.clear()
 
     def get_value(self):
         """Return node value, evaluate if needed and paint dependents dirty"""
@@ -69,8 +108,14 @@ class Node(object):
         return self.get_triggered_dependents(make_cache=make_cache)
 
     def _evaluate(self):
-        raise NotImplementedError('You must implement the _evaluate() method '
-                                  'in subclasses of Node.')
+        if not self._action:
+            raise NotImplementedError('You must define the action= argument '
+                                      'when instantiating the Node')
+        positional_values = (i.get_value()
+                             for i in self._positional_inputs)
+        keyword_values = {name: i.get_value()
+                          for name, i in self._keyword_inputs.iteritems()}
+        return self._action(*positional_values, **keyword_values)
 
     def get_triggered_dependents(self, make_cache=True):
         """Return the set of triggered dependent nodes
@@ -110,8 +155,7 @@ class Node(object):
 
     def __repr__(self):
         return ('<{self.__class__.__name__} {self.name}: {self._value}>'
-                .format(self=self,
-                        value=unicode(self).encode('ascii', errors='replace')))
+                .format(self=self))
 
 
 def update_nodes_iter(nodes_and_values):

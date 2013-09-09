@@ -1,3 +1,6 @@
+# pylint: disable=W0212
+#         Access to a protected member of a client class
+
 from unittest import TestCase
 from lusmu.base import (DIRTY,
                         Node,
@@ -24,8 +27,29 @@ class NodeTestCase(TestCase):
 
     def test_name(self):
         """A node uses its name in its string representation"""
-        self.assertEqual('<ConstantNode node: 1>',
+        self.assertEqual('<ConstantNode node: DIRTY>',
                          repr(ConstantNode('node')))
+
+    def test_initial_inputs(self):
+        """Inputs of a node can be set up in the constructor"""
+        root = ConstantNode('root')
+        branch = ConstantNode('branch')
+        leaf = ConstantNode('node', inputs=([root], {'branch': branch}))
+        self.assertEqual({leaf}, root._dependents)
+        self.assertEqual({leaf}, branch._dependents)
+        self.assertEqual((root,), leaf._positional_inputs)
+        self.assertEqual({'branch': branch}, leaf._keyword_inputs)
+
+    def test_changing_inputs_disconnects_dependents(self):
+        root1 = ConstantNode('root1')
+        leaf = ConstantNode('leaf', inputs=([root1], {}))
+        self.assertEqual({leaf}, root1._dependents)
+        root2 = ConstantNode('root2')
+        root3 = ConstantNode('root3')
+        leaf.set_inputs(root2, foo=root3)
+        self.assertEqual(set(), root1._dependents)
+        self.assertEqual({leaf}, root2._dependents)
+        self.assertEqual({leaf}, root3._dependents)
 
 
 class NodeDependentTestCase(TestCase):
