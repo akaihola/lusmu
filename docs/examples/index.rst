@@ -1,0 +1,5 @@
+Examples
+========
+
+.. toctree::
+   home-automation
