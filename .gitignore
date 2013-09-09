@@ -1,4 +1,5 @@
 *.pyc
 *~
 /lusmu.egg-info
+/*.egg
 /docs/_build
