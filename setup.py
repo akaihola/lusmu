@@ -8,4 +8,6 @@ setup(name='lusmu',
       author_email='antti.kaihola@eniram.fi',
       description='A lazy/forced evaluation library',
       keywords='eniram reactive lazy evaluation',
-      url='https://github.com/akaihola/lusmu')
+      url='https://github.com/akaihola/lusmu',
+      test_suite='nose.collector',
+      tests_require=['nose==1.3.0'])
