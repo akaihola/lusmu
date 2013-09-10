@@ -7,7 +7,7 @@ from unittest import TestCase
 from lusmu.base import (DIRTY,
                         Node,
                         update_nodes_get_triggered,
-                        _triggered_cache)
+                        _TRIGGERED_CACHE)
 
 
 class IncompleteNode(Node):
@@ -174,15 +174,15 @@ class TriggeredCacheTestCase(TestCase):
         """Triggered dependents are cached for each node"""
         self.root._get_triggered_dependents()
         self.assertEqual({self.root: {self.branch, self.leaf1, self.leaf2}},
-                         _triggered_cache)
+                         _TRIGGERED_CACHE)
 
     def test_connect_clears_cache(self):
         """Connecting nodes invalidates the triggered nodes cache"""
         self.root._get_triggered_dependents()
         self.assertEqual({self.root: {self.branch, self.leaf1, self.leaf2}},
-                         _triggered_cache)
+                         _TRIGGERED_CACHE)
         self.root._connect(CountingNode('leaf3'))
-        self.assertEqual({}, _triggered_cache)
+        self.assertEqual({}, _TRIGGERED_CACHE)
 
     def test_get_triggered_dependents(self):
         """_get_triggered_dependents() isn't called again for cached nodes"""

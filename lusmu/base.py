@@ -1,12 +1,17 @@
+"""Core functionality of the lusmu library"""
+
+# pylint: disable=W0212
+#         Allow access to protected members of client classes
+
 from collections import defaultdict
 import itertools
 import logging
 
 
-log = logging.getLogger('lusmu.base')
+LOG = logging.getLogger('lusmu.base')
 
 
-_triggered_cache = {}
+_TRIGGERED_CACHE = {}
 
 
 class DIRTY:
@@ -81,6 +86,19 @@ class Node(object):
 
     @staticmethod
     def inputs(*args, **kwargs):
+        """Construct a value for the inputs= kwarg of the constructor
+
+        Allows writing this::
+
+            >>> Node(inputs=Node.inputs(input1, input2,
+            ...                         kw1=input3, kw2=input4)
+
+        instead of this::
+
+            >>> Node(inputs=([input1, input2],
+            ...              {'kw1': input3, 'kw2': input4})))
+
+        """
         return args, kwargs
 
     def set_inputs(self, *args, **kwargs):
@@ -96,7 +114,7 @@ class Node(object):
         """Return node value, evaluate if needed and paint dependents dirty"""
         if self._value is DIRTY:
             self._value = self._evaluate()
-            log.debug('EVALUATED %s: %s', self.name, self._value)
+            LOG.debug('EVALUATED %s: %s', self.name, self._value)
             self._set_dependents_dirty()
         return self._value
 
@@ -155,7 +173,7 @@ class Node(object):
             self._dependents.add(dependent)
             if self._value is not DIRTY:
                 dependent._set_value(DIRTY, make_cache=False)
-            _triggered_cache.clear()
+            _TRIGGERED_CACHE.clear()
 
     def _disconnect(self, dependent):
         """Remove the given node from the set of dependents of this node
@@ -170,7 +188,7 @@ class Node(object):
             self._dependents.remove(dependent)
             if self._value is not DIRTY:
                 dependent._set_value(DIRTY, make_cache=False)
-            _triggered_cache.clear()
+            _TRIGGERED_CACHE.clear()
 
     def _set_value(self, value, make_cache=True):
         """Set a new value for this node
@@ -195,6 +213,15 @@ class Node(object):
         return self._get_triggered_dependents(make_cache=make_cache)
 
     def _evaluate(self):
+        """Calculate the value for the Node
+
+        Calls the action of the Node using values from the inputs of the Node.
+        Returns the result of the action function.
+
+        This function can also be overridden in subclasses if a class-based
+        approach to creating Node actions is preferred.
+
+        """
         if not self._action:
             raise NotImplementedError('You must define the action= argument '
                                       'when instantiating the Node')
@@ -216,15 +243,15 @@ class Node(object):
         queried from external code.
 
         """
-        if self in _triggered_cache:
-            return _triggered_cache[self]
+        if self in _TRIGGERED_CACHE:
+            return _TRIGGERED_CACHE[self]
         triggered = set()
         for dependent in self._dependents:
             if dependent.triggered:
                 triggered.add(dependent)
             triggered |= dependent._get_triggered_dependents(make_cache=False)
         if make_cache:
-            _triggered_cache[self] = triggered
+            _TRIGGERED_CACHE[self] = triggered
         return triggered
 
     def _set_dependents_dirty(self):
