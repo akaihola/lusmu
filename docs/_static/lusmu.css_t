@@ -1,0 +1,5 @@
+div.section > dl {
+    margin-top: 20px;
+    border-top: solid 1px #d0d0d0;
+    padding-top: 20px;
+}
