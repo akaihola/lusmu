@@ -2,6 +2,10 @@
 
 # pylint: disable=W0212
 #         Access to a protected member of a client class
+# pylint: disable=C0103
+#         Allow long method names
+# pylint: disable=R0904
+#         Allow lots of public methods
 
 from unittest import TestCase
 from lusmu.base import (DIRTY,
@@ -46,7 +50,7 @@ class NodeTestCase(TestCase):
         class ActionNamedNode(Node):
             """Node subclass for testing action names in automatic names"""
 
-        def my_action(arg):
+        def my_action(_arg):
             """Dummy example action"""
 
         node = ActionNamedNode(action=my_action)

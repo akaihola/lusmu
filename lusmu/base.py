@@ -15,6 +15,8 @@ _TRIGGERED_CACHE = {}
 
 
 class DIRTY:
+    """Class definition for the dirty node special value"""
+
     def __str__(self):
         return 'DIRTY'
 
