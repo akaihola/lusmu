@@ -1,3 +1,5 @@
+"""Unit tests for lusmu.base"""
+
 # pylint: disable=W0212
 #         Access to a protected member of a client class
 
@@ -20,6 +22,8 @@ class ConstantNode(Node):
 
 
 class NodeTestCase(TestCase):
+    """Test case for basic functionality of the Node class"""
+
     def test_missing_evaluate(self):
         """The Node class must be subclassed, it doesn't work by itself"""
         with self.assertRaises(NotImplementedError):
@@ -33,17 +37,17 @@ class NodeTestCase(TestCase):
     def test_default_name(self):
         """A default name is generated for a node if the name is omitted"""
         class AutoNamedNode(Node):
-            pass
+            """Node subclass for testing automatic names"""
 
         self.assertEqual('AutoNamedNode-1', AutoNamedNode().name)
 
     def test_default_name_with_action(self):
         """The default name of a node includes action func_name if available"""
         class ActionNamedNode(Node):
-            pass
+            """Node subclass for testing action names in automatic names"""
 
         def my_action(arg):
-            return arg
+            """Dummy example action"""
 
         node = ActionNamedNode(action=my_action)
         self.assertEqual('ActionNamedNode-my_action-1', node.name)
@@ -51,15 +55,15 @@ class NodeTestCase(TestCase):
     def test_node_classes_have_separate_counters(self):
         """All Node classes have separate counters for auto-generated names"""
         class CounterNodeA(Node):
-            pass
+            """Node subclass for testing"""
 
         self.assertEqual('CounterNodeA-1', CounterNodeA().name)
 
         class CounterNodeB(Node):
-            pass
+            """Node subclass for testing"""
 
         class CounterNodeC(Node):
-            pass
+            """Node subclass for testing"""
 
         self.assertEqual('CounterNodeB-1', CounterNodeB().name)
         self.assertEqual('CounterNodeC-1', CounterNodeC().name)
@@ -107,6 +111,8 @@ class NodeTestCase(TestCase):
 
 
 class NodeDependentTestCase(TestCase):
+    """Test case for triggered dependent Nodes"""
+
     def setUp(self):
         self.root = ConstantNode('root')
         self.dependent = ConstantNode('dependent', triggered=False)
@@ -140,6 +146,8 @@ class NodeDependentTestCase(TestCase):
 
 
 class CountingNode(ConstantNode):
+    """Node class which counts calls to _get_triggered_dependents()"""
+
     def __init__(self, *args, **kwargs):
         super(CountingNode, self).__init__(*args, **kwargs)
         self.call_count = 0
@@ -151,6 +159,8 @@ class CountingNode(ConstantNode):
 
 
 class TriggeredCacheTestCase(TestCase):
+    """Test case for the cache of triggered nodes"""
+
     def setUp(self):
         self.root = CountingNode('root')
         self.branch = CountingNode('branch', triggered=True)
@@ -189,6 +199,8 @@ class TriggeredCacheTestCase(TestCase):
 
 
 class NodeSetValueTestCase(TestCase):
+    """Test case for Node.set_value()"""
+
     def test_set_value(self):
         """A value set to a dirty Node is stored in the object"""
         node = Node('name')
@@ -197,6 +209,8 @@ class NodeSetValueTestCase(TestCase):
 
 
 class UpdateNodesTestCase(TestCase):
+    """Test case for update_nodes*() methods"""
+
     def setUp(self):
         self.root = CountingNode('root')
         self.branch1 = CountingNode('branch1', triggered=True)
@@ -224,6 +238,8 @@ class UpdateNodesTestCase(TestCase):
 
 
 class HomeAutomationTestCase(TestCase):
+    """Test case illustrating a fictitious home automation use case"""
+
     def test_home_automation(self):
         """A simple example in the home automation domain"""
         brightness_1 = Node()
@@ -232,6 +248,7 @@ class HomeAutomationTestCase(TestCase):
                               inputs=Node.inputs(brightness_1, brightness_2))
 
         def inverse(value):
+            """Return the inverse of a value in the range 0..510"""
             return 510 - value
 
         brightness_inverse = Node(action=inverse,
@@ -240,6 +257,7 @@ class HomeAutomationTestCase(TestCase):
         lamp_power_changes = []
 
         def set_lamp_power(value):
+            """Log changes to lamp power"""
             lamp_power_changes.append(value)
 
         _lamp_power = Node(action=set_lamp_power,
