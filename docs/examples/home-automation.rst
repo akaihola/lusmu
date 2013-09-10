@@ -4,11 +4,11 @@ Home automation example
 This is an example of using reactive programming and the Lusmu library
 in a home automation setting.
 
-First, import the Lusmu :class:`~lusmu.base.Node` class, the
-:func:`~lusmu.base.update_nodes` function for inserting input values,
+First, import the Lusmu :class:`~lusmu.core.Node` class, the
+:func:`~lusmu.core.update_nodes` function for inserting input values,
 and the Python :mod:`math` package::
 
-    from lusmu.base import Node, update_nodes
+    from lusmu.core import Node, update_nodes
     import math
 
 Them define the action functions
@@ -102,17 +102,17 @@ the relative humidity is calculated:
                                inputs=Node.inputs(humidity))
 
 Initially the value of all nodes is undefined.
-The :obj:`lusmu.base.DIRTY` special object is used
+The :obj:`lusmu.core.DIRTY` special object is used
 to denote an undefined value.
-The private :attr:`~lusmu.base.Node._value` attribute
+The private :attr:`~lusmu.core.Node._value` attribute
 can be inspected to see the cached value of the node
 without triggering lazy evaluation::
 
     >>> temperature_avg._value
-    <lusmu.base.DIRTY>
+    <lusmu.core.DIRTY>
 
 Values are fed into input nodes
-using the :func:`~lusmu.base.update_nodes` function::
+using the :func:`~lusmu.core.update_nodes` function::
 
     >>> update_nodes([(temperature_1, 25.0),
     ...               (temperature_2, 22.5),
@@ -135,11 +135,11 @@ when values of nodes are updated::
 On the other hand, the relative humidity value is not auto-calculated::
 
     >>> humidity_normalized._value
-    <lusmu.base.DIRTY>
+    <lusmu.core.DIRTY>
 
 The dependency path from the input node to the requested humidity value
 is only evaluated when needed.
-The :attr:`lusmu.base.Node.value` property triggers evaluation::
+The :attr:`lusmu.core.Node.value` property triggers evaluation::
 
     >>> humidity_normalized.value
     29.40196809721851

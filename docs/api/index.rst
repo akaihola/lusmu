@@ -1,5 +1,5 @@
 The API
 =======
 
-.. automodule:: lusmu.base
+.. automodule:: lusmu.core
    :members:
