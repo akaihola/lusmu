@@ -3,3 +3,7 @@
 /lusmu.egg-info
 /*.egg
 /docs/_build
+/reports
+/venv
+/coverage.xml
+/.coverage
