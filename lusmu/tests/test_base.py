@@ -1,4 +1,4 @@
-"""Unit tests for lusmu.base"""
+"""Unit tests for lusmu.core"""
 
 # pylint: disable=W0212
 #         Access to a protected member of a client class
@@ -8,7 +8,7 @@
 #         Allow lots of public methods
 
 from unittest import TestCase
-from lusmu.base import (DIRTY,
+from lusmu.core import (DIRTY,
                         Node,
                         update_nodes_get_triggered,
                         _TRIGGERED_CACHE)
