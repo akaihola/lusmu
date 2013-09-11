@@ -21,7 +21,7 @@ def collect_nodes(collected_nodes, *args):
 def graphviz_lines(nodes):
     all_nodes = set()
     collect_nodes(all_nodes, *nodes)
-    all_nodes = sorted(all_nodes)
+    all_nodes = sorted(all_nodes, key=lambda node: id(node))
     input_nodes = [n for n in all_nodes if n.name.startswith('Input:')]
 
     yield 'digraph gr {'
