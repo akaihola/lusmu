@@ -6,9 +6,30 @@
 from collections import defaultdict
 import itertools
 import logging
+import sys
 
 
 LOG = logging.getLogger('lusmu.base')
+
+
+if sys.version_info[0] == 2:
+    def items(dictionary):
+        return dictionary.viewitems()
+
+    def values(dictionary):
+        return dictionary.viewvalues()
+
+    def get_func_name(function, default=None):
+        return getattr(function, 'func_name', default)
+else:
+    def items(dictionary):
+        return dictionary.items()
+
+    def values(dictionary):
+        return dictionary.values()
+
+    def get_func_name(function, default=None):
+        return getattr(function, '__name__', default)
 
 
 _TRIGGERED_CACHE = {}
@@ -147,7 +168,7 @@ class Node(object):
 
         """
         counters = self._name_counters
-        action_name = getattr(self._action, 'func_name', '<lambda>')
+        action_name = get_func_name(self._action, '<lambda>')
         if action_name != '<lambda>':
             template = '{class_name}-{action_name}-{counter}'
         else:
@@ -160,7 +181,7 @@ class Node(object):
     def _iterate_inputs(self):
         """Iterate through positional and keyword inputs"""
         return itertools.chain(self._positional_inputs,
-                               self._keyword_inputs.itervalues())
+                               values(self._keyword_inputs))
 
     def _connect(self, dependent):
         """Set the given node as a dependent of this node
@@ -230,7 +251,7 @@ class Node(object):
         positional_values = [i.get_value()
                              for i in self._positional_inputs]
         keyword_values = {name: i.get_value()
-                          for name, i in self._keyword_inputs.iteritems()}
+                          for name, i in items(self._keyword_inputs)}
         return self._action(*positional_values, **keyword_values)
 
     def _get_triggered_dependents(self, make_cache=True):
