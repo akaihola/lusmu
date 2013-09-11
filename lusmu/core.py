@@ -14,21 +14,27 @@ LOG = logging.getLogger('lusmu.base')
 
 if sys.version_info[0] == 2:
     def items(dictionary):
+        """Return a set-like object, a view on key/value pairs of a dict"""
         return dictionary.viewitems()
 
     def values(dictionary):
+        """Return an object providing a view on the values of a dictionary"""
         return dictionary.viewvalues()
 
     def get_func_name(function, default=None):
+        """Return the name of the function, falling back to a default"""
         return getattr(function, 'func_name', default)
 else:
     def items(dictionary):
+        """Return a set-like object, a view on key/value pairs of a dict"""
         return dictionary.items()
 
     def values(dictionary):
+        """Return an object providing a view on the values of a dictionary"""
         return dictionary.values()
 
     def get_func_name(function, default=None):
+        """Return the name of the function, falling back to a default"""
         return getattr(function, '__name__', default)
 
 
@@ -109,6 +115,10 @@ class BaseNode(object):
         self._value = value
         self._set_dependents_dirty()
         return self._get_triggered_dependents(make_cache=make_cache)
+
+    def get_value(self):
+        raise NotImplementedError('The get_value() method must be defined '
+                                  'for subclasses of BaseNode')
 
     def _get_triggered_dependents(self, make_cache=True):
         """Return the set of triggered dependent Nodes
