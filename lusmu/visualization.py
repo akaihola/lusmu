@@ -1,3 +1,8 @@
+"""Tools for visualizing a lusmu graph"""
+
+# pylint: disable=W0212
+#         Allow access to protected members of client classes
+
 from __future__ import print_function, unicode_literals
 
 from lusmu.core import Node
@@ -5,6 +10,11 @@ import subprocess
 
 
 def collect_nodes(collected_nodes, *args):
+    """Collect all nodes belonging to the same graph
+
+    Walks dependent Nodes and inputs recursively.
+
+    """
     if not args:
         return
     node = args[0]
@@ -19,9 +29,10 @@ def collect_nodes(collected_nodes, *args):
 
 
 def graphviz_lines(nodes):
+    """Generate source lines for a Graphviz graph definition"""
     all_nodes = set()
     collect_nodes(all_nodes, *nodes)
-    all_nodes = sorted(all_nodes, key=lambda node: id(node))
+    all_nodes = sorted(all_nodes, key=id)
     input_nodes = [n for n in all_nodes if n.name.startswith('Input:')]
 
     yield 'digraph gr {'
@@ -46,6 +57,7 @@ def graphviz_lines(nodes):
 
 
 def visualize_graph(nodes, filename):
+    """Saves a visualization of given nodes in a PNG file"""
     graphviz = subprocess.Popen(['dot', '-Tpng', '-o', filename],
                                 stdin=subprocess.PIPE)
     source = '\n'.join(graphviz_lines(nodes))
