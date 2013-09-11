@@ -4,11 +4,12 @@ Home automation example
 This is an example of using reactive programming and the Lusmu library
 in a home automation setting.
 
-First, import the Lusmu :class:`~lusmu.core.Node` class, the
-:func:`~lusmu.core.update_nodes` function for inserting input values,
+First, import the Lusmu :class:`~lusmu.core.Input`
+and :class:`~lusmu.core.Node` classes,
+the :func:`~lusmu.core.update_inputs` function for inserting input values
 and the Python :mod:`math` package::
 
-    from lusmu.core import Node, update_nodes
+    from lusmu.core import Input, Node, update_inputs
     import math
 
 Them define the action functions
@@ -37,16 +38,18 @@ and a lower limit of 20.0 degrees is used to switch the heater off:
 .. graphviz::
 
    digraph temperature {
-      "temperature_1" -> "temperature_avg";
-      "temperature_2" -> "temperature_avg";
-      "temperature_avg" -> "temperature_threshold";
-      "temperature_threshold" -> "heater";
+      temperature_1 [shape=diamond];
+      temperature_2 [shape=diamond];
+      temperature_1 -> temperature_avg;
+      temperature_2 -> temperature_avg;
+      temperature_avg -> temperature_threshold;
+      temperature_threshold -> heater;
    }
 
 ::
 
-    temperature_1 = Node()
-    temperature_2 = Node()
+    temperature_1 = Input()
+    temperature_2 = Input()
     temperature_avg = Node(action=avg,
                            inputs=Node.inputs(temperature_1, temperature_2))
     temperature_threshold = Node(action=lambda temperature: temperature > 20.0,
@@ -64,16 +67,18 @@ The lights are adjusted according to brightness sensors in the windows:
 .. graphviz::
 
    digraph brightness {
-      "brightness_1" -> "brightness_sum";
-      "brightness_2" -> "brightness_sum";
-      "brightness_sum" -> "brightness_inverse";
-      "brightness_inverse" -> "lamp_power";
+      brightness_1 [shape=diamond];
+      brightness_2 [shape=diamond];
+      brightness_1 -> brightness_sum;
+      brightness_2 -> brightness_sum;
+      brightness_sum -> brightness_inverse;
+      brightness_inverse -> lamp_power;
    }
 
 ::
 
-    brightness_1 = Node()
-    brightness_2 = Node()
+    brightness_1 = Input()
+    brightness_2 = Input()
     brightness_sum = Node(action=sum_,
                           inputs=Node.inputs(brightness_1, brightness_2))
     brightness_inverse = Node(action=inverse(510),
@@ -92,12 +97,13 @@ the relative humidity is calculated:
 .. graphviz::
 
    digraph humidity {
-      "humidity" -> "humidity_normalized";
+      humidity [shape=diamond];
+      humidity -> humidity_normalized;
    }
  
 ::
 
-    humidity = Node()
+    humidity = Input()
     humidity_normalized = Node(action=lambda sensor_value: 100.0 * (1.0 - math.log(sensor_value, 255)),
                                inputs=Node.inputs(humidity))
 
@@ -112,13 +118,13 @@ without triggering lazy evaluation::
     <lusmu.core.DIRTY>
 
 Values are fed into input nodes
-using the :func:`~lusmu.core.update_nodes` function::
+using the :func:`~lusmu.core.update_inputs` function::
 
-    >>> update_nodes([(temperature_1, 25.0),
-    ...               (temperature_2, 22.5),
-    ...               (brightness_1, 100),
-    ...               (brightness_2, 110),
-    ...               (humidity, 50)])
+    >>> update_inputs([(temperature_1, 25.0),
+    ...                (temperature_2, 22.5),
+    ...                (brightness_1, 100),
+    ...                (brightness_2, 110),
+    ...                (humidity, 50)])
     Heater off
     Lamp power 300.0
 
@@ -146,12 +152,12 @@ The :attr:`lusmu.core.Node.value` property triggers evaluation::
 
 Unchanged values don't trigger evaluation:
 
-    >>> update_nodes([(temperature_1, 25.0),
-    ...               (temperature_2, 22.5)})
+    >>> update_inputs([(temperature_1, 25.0),
+    ...                (temperature_2, 22.5)})
 
 Changing the values does::
 
-    >>> update_nodes([(temperature_1, 21.0),
-    ...               (temperature_2, 18.5)])
+    >>> update_inputs([(temperature_1, 21.0),
+    ...                (temperature_2, 18.5)])
     Heater on
     Lamp power 405.00

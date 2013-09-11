@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+from lusmu.core import Node
 import subprocess
 
 
@@ -13,7 +14,8 @@ def collect_nodes(collected_nodes, *args):
     collect_nodes(collected_nodes, *rest)
     collected_nodes.add(node)
     collect_nodes(collected_nodes, *node._dependents)
-    collect_nodes(collected_nodes, *node._iterate_inputs())
+    if isinstance(node, Node):
+        collect_nodes(collected_nodes, *node._iterate_inputs())
 
 
 def graphviz_lines(nodes):
@@ -26,8 +28,8 @@ def graphviz_lines(nodes):
     yield '  rankdir = LR;'
     yield '  { rank = source;'
     for node in input_nodes:
-        yield '  n{}'.format(id(node))
-    yield '}'
+        yield '    n{};'.format(id(node))
+    yield '  }'
     for node in all_nodes:
         yield ('  n{node} [label="{name}"];'
                .format(node=id(node), name=node.name.replace(':', r'\n')))
@@ -36,9 +38,10 @@ def graphviz_lines(nodes):
             yield ('  n{node} -> n{other} [label="data"];'
                    .format(node=id(node), other=id(other)))
         yield '  edge [color=red];'
-        for other in node._iterate_inputs():
-            yield ('  n{node} -> n{other} [label="input"];'
-                   .format(node=id(node), other=id(other)))
+        if isinstance(node, Node):
+            for other in node._iterate_inputs():
+                yield ('  n{node} -> n{other} [label="input"];'
+                       .format(node=id(node), other=id(other)))
     yield '}'
 
 

@@ -8,9 +8,10 @@
 #         Allow lots of public methods
 
 from unittest import TestCase
-from lusmu.core import (DIRTY,
-                        Node,
-                        update_nodes_get_triggered,
+from lusmu.core import (Node,
+                        DIRTY,
+                        Input,
+                        update_inputs_get_triggered,
                         _TRIGGERED_CACHE)
 
 
@@ -40,30 +41,30 @@ class NodeTestCase(TestCase):
 
     def test_default_name(self):
         """A default name is generated for a node if the name is omitted"""
-        class AutoNamedNode(Node):
+        class AutoNamedInput(Input):
             """Node subclass for testing automatic names"""
 
-        self.assertEqual('AutoNamedNode-1', AutoNamedNode().name)
+        self.assertEqual('AutoNamedInput-1', AutoNamedInput().name)
 
     def test_default_name_with_action(self):
         """The default name of a node includes action func_name if available"""
-        class ActionNamedNode(Node):
+        class NamedNode(Node):
             """Node subclass for testing action names in automatic names"""
 
         def my_action(_arg):
             """Dummy example action"""
 
-        node = ActionNamedNode(action=my_action)
-        self.assertEqual('ActionNamedNode-my_action-1', node.name)
+        node = NamedNode(action=my_action)
+        self.assertEqual('NamedNode-my_action-1', node.name)
 
     def test_node_classes_have_separate_counters(self):
         """All Node classes have separate counters for auto-generated names"""
-        class CounterNodeA(Node):
+        class CounterNodeA(Input):
             """Node subclass for testing"""
 
         self.assertEqual('CounterNodeA-1', CounterNodeA().name)
 
-        class CounterNodeB(Node):
+        class CounterNodeB(Input):
             """Node subclass for testing"""
 
         class CounterNodeC(Node):
@@ -96,20 +97,20 @@ class NodeTestCase(TestCase):
         self.assertEqual({leaf}, root3._dependents)
 
     def test_initial_value(self):
-        """The initial value of a Node can be set in the constructor"""
-        node = Node(value=5)
+        """The initial value of an Input can be set in the constructor"""
+        node = Input(value=5)
         self.assertEqual(5, node._value)
 
     def test_value_property_setter(self):
         """The value of a Node can be set with the .value property"""
-        root = Node()
+        root = Input()
         leaf = Node(action=lambda value: value, inputs=Node.inputs(root))
         root.value = 5
         self.assertEqual(5, leaf.get_value())
 
     def test_value_property_getter(self):
         """The value of a Node can be set with the .value property"""
-        root = Node(value=5)
+        root = Input(value=5)
         leaf = Node(action=lambda value: value, inputs=Node.inputs(root))
         self.assertEqual(5, leaf.value)
 
@@ -118,7 +119,7 @@ class NodeDependentTestCase(TestCase):
     """Test case for triggered dependent Nodes"""
 
     def setUp(self):
-        self.root = ConstantNode('root')
+        self.root = Input('root')
         self.dependent = ConstantNode('dependent', triggered=False)
         self.root._connect(self.dependent)
         self.triggered = ConstantNode('triggered', triggered=True)
@@ -149,24 +150,32 @@ class NodeDependentTestCase(TestCase):
         self.assertEqual({self.triggered, child1, child2}, triggered_nodes)
 
 
-class CountingNode(ConstantNode):
-    """Node class which counts calls to _get_triggered_dependents()"""
+class Counting(object):
+    """Mixin which counts calls to _get_triggered_dependents()"""
 
     def __init__(self, *args, **kwargs):
-        super(CountingNode, self).__init__(*args, **kwargs)
+        super(Counting, self).__init__(*args, **kwargs)
         self.call_count = 0
 
     def _get_triggered_dependents(self, *args, **kwargs):
         self.call_count += 1
-        return super(CountingNode, self)._get_triggered_dependents(*args,
-                                                                   **kwargs)
+        return super(Counting, self)._get_triggered_dependents(*args,
+                                                               **kwargs)
+
+
+class CountingNode(Counting, ConstantNode):
+    pass
+
+
+class CountingInput(Counting, Input):
+    pass
 
 
 class TriggeredCacheTestCase(TestCase):
     """Test case for the cache of triggered nodes"""
 
     def setUp(self):
-        self.root = CountingNode('root')
+        self.root = CountingInput('root')
         self.branch = CountingNode('branch', triggered=True)
         self.leaf1 = CountingNode('leaf1', triggered=True)
         self.leaf2 = CountingNode('leaf2', triggered=True)
@@ -207,16 +216,16 @@ class NodeSetValueTestCase(TestCase):
 
     def test_set_value(self):
         """A value set to a dirty Node is stored in the object"""
-        node = Node('name')
+        node = Input('name')
         node.set_value(0)
         self.assertEqual(0, node._value)
 
 
 class UpdateNodesTestCase(TestCase):
-    """Test case for update_nodes*() methods"""
+    """Test case for update_inputs*() methods"""
 
     def setUp(self):
-        self.root = CountingNode('root')
+        self.root = CountingInput('root')
         self.branch1 = CountingNode('branch1', triggered=True)
         self.branch2 = CountingNode('branch2', triggered=True)
         self.leaf1 = CountingNode('leaf1', triggered=True)
@@ -232,12 +241,12 @@ class UpdateNodesTestCase(TestCase):
 
     def test_only_leafs_triggered_1(self):
         """Updating a Node only triggers its descendents"""
-        triggered = update_nodes_get_triggered([(self.branch1, 2)])
+        triggered = update_inputs_get_triggered([(self.branch1, 2)])
         self.assertEqual({self.leaf1, self.leaf2}, triggered)
 
     def test_only_leafs_triggered_2(self):
         """Updating a Node only triggers its descendents"""
-        triggered = update_nodes_get_triggered([(self.branch2, 2)])
+        triggered = update_inputs_get_triggered([(self.branch2, 2)])
         self.assertEqual({self.leaf3, self.leaf4}, triggered)
 
 
@@ -246,8 +255,8 @@ class HomeAutomationTestCase(TestCase):
 
     def test_home_automation(self):
         """A simple example in the home automation domain"""
-        brightness_1 = Node()
-        brightness_2 = Node()
+        brightness_1 = Input()
+        brightness_2 = Input()
         brightness_sum = Node(action=lambda *args: sum(args),
                               inputs=Node.inputs(brightness_1, brightness_2))
 
@@ -268,17 +277,17 @@ class HomeAutomationTestCase(TestCase):
                            inputs=Node.inputs(brightness_inverse),
                            triggered=True)
 
-        update_nodes_get_triggered([(brightness_1, 20),
+        update_inputs_get_triggered([(brightness_1, 20),
                                     (brightness_2, 40)])
 
         self.assertEqual([450], lamp_power_changes)
 
-        update_nodes_get_triggered([(brightness_1, 20),
+        update_inputs_get_triggered([(brightness_1, 20),
                                     (brightness_2, 40)])
 
         self.assertEqual([450], lamp_power_changes)
 
-        update_nodes_get_triggered([(brightness_1, 24),
+        update_inputs_get_triggered([(brightness_1, 24),
                                     (brightness_2, 40)])
 
         self.assertEqual([450, 446], lamp_power_changes)
