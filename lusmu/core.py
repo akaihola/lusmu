@@ -2,6 +2,8 @@
 
 # pylint: disable=W0212
 #         Allow access to protected members of client classes
+# pylint: disable=W0142
+#         Allow * and ** magic
 
 from collections import defaultdict
 import itertools
@@ -41,7 +43,7 @@ else:
 _TRIGGERED_CACHE = {}
 
 
-class DIRTY:
+class DIRTY(object):
     """Class definition for the dirty node special value"""
 
     def __str__(self):
@@ -117,6 +119,7 @@ class BaseNode(object):
         return self._get_triggered_dependents(make_cache=make_cache)
 
     def get_value(self):
+        """Return the value of the object"""
         raise NotImplementedError('The get_value() method must be defined '
                                   'for subclasses of BaseNode')
 
