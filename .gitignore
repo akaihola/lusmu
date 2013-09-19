@@ -2,6 +2,7 @@
 *~
 /lusmu.egg-info
 /*.egg
+/dist
 /docs/_build
 /reports
 /venv
