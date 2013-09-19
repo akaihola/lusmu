@@ -2,6 +2,8 @@
 
 # pylint: disable=W0212
 #         Allow access to protected members of client classes
+# pylint: disable=W0142
+#         Allow * and ** magic
 
 from __future__ import print_function, unicode_literals
 
