@@ -112,11 +112,22 @@ class BaseNode(object):
         non-input Nodes.
 
         """
-        if value == self._value:
+        # test if neither, one of or both the old and the new value are DIRTY
+        dirty_count = len([v for v in value, self._value if v is DIRTY])
+        if dirty_count == 2:
+            # both DIRTY, no need to touch anything
             return set()
+        if dirty_count == 0 and self._value_eq(value):
+            # both non-DIRTY but equal, no need to touch anything
+            return set()
+        # either one is DIRTY, or values aren't equal, update the value and
+        # paint the dependent Nodes dirty
         self._value = value
         self._set_dependents_dirty()
         return self._get_triggered_dependents(make_cache=make_cache)
+
+    def _value_eq(self, other_value):
+        return self._value == other_value
 
     def get_value(self):
         """Return the value of the object"""
