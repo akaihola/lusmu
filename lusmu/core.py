@@ -193,13 +193,16 @@ class BaseNode(object):
 class Input(BaseNode):
     """The input node class for reactive programming
 
-    Constructor arguments:
-      name (optional):
-        The internal name of the Input. Used in the
-        ``__repr__`` of the object. If omitted, a name is
-        automatically generated.
-      value (optional):
-        The initial value for the Input.
+    Constructor arguments
+    ---------------------
+
+    name (optional): string
+            The internal name of the Input. Used in the
+            ``__repr__`` of the object. If omitted, a name is
+            automatically generated.
+
+    value (optional):
+            The initial value for the Input.
 
     Examples of Inputs::
 
@@ -229,25 +232,26 @@ class Input(BaseNode):
 class Node(BaseNode):
     """The Node class for reactive programming
 
-    Constructor arguments:
+    Constructor arguments
+    ---------------------
 
-      name (optional):
+    name (optional): string
+            The internal name of the Node. Used in the ``__repr__`` of the
+            object. If omitted, a name is automatically generated.
 
-        The internal name of the Node. Used in the ``__repr__`` of the
-        object. If omitted, a name is automatically generated.
+    action: callable(*positional_inputs, **keyword_inputs)
+            The function for calculating the value of a calculated node.
+            Values from inputs are provided in positional and keyword arguments
+            as defined in the ``inputs=`` argument.
 
-      action:
+    inputs (optional): ((Input/Node, ...), {key: Input/Node, ...})
+            The Nodes and Inputs whose values are used as inputs for the
+            action.  This argument can be created with ``Node.inputs()`` which
+            provides a cleaner syntax.
 
-        The function for calculating the value of a calculated node.
-
-      inputs (optional):
-
-        The Nodes and Inputs whose values are used as inputs for the action.
-
-      triggered (default=False):
-
-        Should this Node be automatically evaluated when any of its dependency
-        Nodes or Inputs change value
+    triggered: boolean (default=False)
+            ``True`` is this Node shoud be automatically evaluated when any of
+            its dependency Nodes or Inputs change value
 
     Examples of Nodes::
 
