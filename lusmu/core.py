@@ -43,7 +43,7 @@ else:
 _TRIGGERED_CACHE = {}
 
 
-class DIRTY(object):
+class _DIRTY(object):
     """Class definition for the dirty node special value"""
 
     def __str__(self):
@@ -51,7 +51,9 @@ class DIRTY(object):
 
     def __repr__(self):
         return '<lusmu.base.DIRTY>'
-DIRTY = DIRTY()
+
+
+DIRTY = _DIRTY()
 
 
 class BaseNode(object):
