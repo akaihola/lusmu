@@ -2,8 +2,10 @@
 *~
 /lusmu.egg-info
 /*.egg
+/build
 /dist
 /docs/_build
+/nosetests.xml
 /reports
 /venv
 /coverage.xml
