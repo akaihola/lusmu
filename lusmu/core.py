@@ -257,6 +257,7 @@ class Node(BaseNode):
 
     Examples of Nodes::
 
+        >>> input_1, input_2, exponent = [Input() for i in range(3)]
         >>> # sum Node with two positional inputs
         >>> sum_node = Node(action=lambda *args: sum(args),
         ...                 inputs=Node.inputs(input_1, input_2))
@@ -305,13 +306,14 @@ class Node(BaseNode):
 
         Allows writing this::
 
-            >>> Node(inputs=Node.inputs(input1, input2,
-            ...                         kw1=input3, kw2=input4)
+            >>> inputs = [Input() for i in range(4)]
+            >>> node = Node(inputs=Node.inputs(inputs[0], inputs[1],
+            ...                                kw1=inputs[2], kw2=inputs[3]))
 
         instead of this::
 
-            >>> Node(inputs=([input1, input2],
-            ...              {'kw1': input3, 'kw2': input4})))
+            >>> node = Node(inputs=([inputs[0], inputs[1]],
+            ...                     {'kw1': inputs[2], 'kw2': inputs[3]}))
 
         """
         return args, kwargs
