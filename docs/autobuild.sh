@@ -2,6 +2,9 @@
 
 # Build the documentation automatically when any file changes.
 #
+# Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
+# this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
+#
 # Usage: ./autobuild.sh
 #
 # On Debian/Ubuntu, this requires:
