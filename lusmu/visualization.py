@@ -7,7 +7,7 @@
 
 from __future__ import print_function, unicode_literals
 
-from lusmu.core import Node
+from lusmu.core import Input, Node
 import subprocess
 
 
@@ -30,12 +30,14 @@ def collect_nodes(collected_nodes, *args):
         collect_nodes(collected_nodes, *node._iterate_inputs())
 
 
-def graphviz_lines(nodes):
+def graphviz_lines(nodes, node_filter):
     """Generate source lines for a Graphviz graph definition"""
     all_nodes = set()
     collect_nodes(all_nodes, *nodes)
+    if node_filter:
+        all_nodes = [n for n in all_nodes if node_filter(n)]
     all_nodes = sorted(all_nodes, key=id)
-    input_nodes = [n for n in all_nodes if n.name.startswith('Input:')]
+    input_nodes = [n for n in all_nodes if isinstance(n, Input)]
 
     yield 'digraph gr {'
     yield '  rankdir = LR;'
@@ -44,24 +46,24 @@ def graphviz_lines(nodes):
         yield '    n{};'.format(id(node))
     yield '  }'
     for node in all_nodes:
-        yield ('  n{node} [label="{name}"];'
-               .format(node=id(node), name=node.name.replace(':', r'\n')))
+        yield ('  n{node} [label="[{name}]{action}"];'
+               .format(node=id(node),
+                       name=node.name.replace(':', r'\n'),
+                       action='\\n\\n{}'.format(node._action.name)
+                       if isinstance(node, Node)
+                       else ''))
         yield '  edge [color=blue];'
         for other in node._dependents:
-            yield ('  n{node} -> n{other} [label="data"];'
-                   .format(node=id(node), other=id(other)))
-        yield '  edge [color=red];'
-        if isinstance(node, Node):
-            for other in node._iterate_inputs():
-                yield ('  n{node} -> n{other} [label="input"];'
+            if other in all_nodes:
+                yield ('  n{node} -> n{other};'
                        .format(node=id(node), other=id(other)))
     yield '}'
 
 
-def visualize_graph(nodes, filename):
+def visualize_graph(nodes, filename, node_filter=lambda node: True):
     """Saves a visualization of given nodes in a PNG file"""
     graphviz = subprocess.Popen(['dot', '-Tpng', '-o', filename],
                                 stdin=subprocess.PIPE)
-    source = '\n'.join(graphviz_lines(nodes))
+    source = '\n'.join(graphviz_lines(nodes, node_filter))
     graphviz.communicate(source.encode('utf-8'))
     return source
