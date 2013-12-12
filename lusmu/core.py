@@ -1,4 +1,9 @@
-"""Core functionality of the lusmu library"""
+"""Core functionality of the lusmu library
+
+Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
+this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
+
+"""
 
 # pylint: disable=W0212
 #         Allow access to protected members of client classes

@@ -3,6 +3,10 @@
 # Lusmu documentation build configuration file, created by
 # sphinx-quickstart on Mon Sep  9 13:11:12 2013.
 #
+# Modifications copyright 2013 Eniram Ltd. See the LICENSE file at the
+# top-level directory of this distribution and at
+# https://github.com/akaihola/lusmu/blob/master/LICENSE
+#
 # This file is execfile()d with the current directory set to its containing dir.
 #
 # Note that not all possible configuration values are present in this

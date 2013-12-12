@@ -1,4 +1,9 @@
-"""Unit tests for lusmu.core"""
+"""Unit tests for lusmu.core
+
+Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
+this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
+
+"""
 
 # pylint: disable=W0212
 #         Access to a protected member of a client class

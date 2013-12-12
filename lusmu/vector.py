@@ -1,6 +1,11 @@
 # -*- encoding: utf-8 -*-
 
-"""The lazy evaluation graph adapted for numpy arrays and pandas Series"""
+"""The lazy evaluation graph adapted for numpy arrays and pandas Series
+
+Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
+this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
+
+"""
 
 # pylint: disable=W0611
 #         update_inputs is provided as a convenience for importing it from the

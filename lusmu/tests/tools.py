@@ -1,3 +1,11 @@
+"""Tools for the Lusmu test suite
+
+Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
+this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
+
+"""
+
+
 def parameterize(func):
     """Decorator for setting test function description based on arguments
 
