@@ -35,6 +35,17 @@ def collect_nodes(collected_nodes, *args):
         collect_nodes(collected_nodes, *node._iterate_inputs())
 
 
+def get_action_name(action):
+    """Try to return a good representation of the name of an action callable"""
+    if hasattr(action, 'name'):
+        return action.name
+    if hasattr(action, '__name__'):
+        return action.__name__
+    if hasattr(action, 'func_name'):
+        return action.func_name
+    return action.__class__.__name__
+
+
 def graphviz_lines(nodes, node_filter):
     """Generate source lines for a Graphviz graph definition"""
     all_nodes = set()
@@ -54,7 +65,7 @@ def graphviz_lines(nodes, node_filter):
         yield ('  n{node} [label="[{name}]{action}"];'
                .format(node=id(node),
                        name=node.name.replace(':', r'\n'),
-                       action='\\n\\n{}'.format(node._action.name)
+                       action='\\n\\n{}'.format(get_action_name(node._action))
                        if isinstance(node, Node)
                        else ''))
         yield '  edge [color=blue];'
