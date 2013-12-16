@@ -1,3 +1,27 @@
+"""An interactive mouse-based example
+
+This script tracks whether mouse clicks hit a circle.
+
+On the screen there's a circle with a fixed center and radius.  Mouse clicks
+inside and outside the circle to change its color.
+
+On click (and drag), mouse coordinates are fed into the ``mousex`` and
+``mousey`` input nodes.  The ``distance`` node takes those coordinates as
+inputs and outputs the distance to the center of the circle.  The result is fed
+into the ``is_close`` node, which outputs a ``True`` value for distances
+smaller than the circle radius.  The ``alert`` node returns a string whose
+value depends on that boolean value.  Finally, the circle changes its color
+based on the string in the ``alert`` node.
+
+You can also observe debug output on the console.  Note how the distance
+measurement is skipped if the coordinate inputs don't change.
+
+If you have the graphviz tool installed, you'll also see a diagram of the graph
+nodes and connections on the screen.  The diagram is saved in ``mouse.gif``.
+
+"""
+
+
 from lusmu.core import Input, Node, update_inputs
 from lusmu.visualization import visualize_graph
 import math
