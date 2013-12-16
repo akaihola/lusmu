@@ -77,8 +77,11 @@ def graphviz_lines(nodes, node_filter):
 
 
 def visualize_graph(nodes, filename, node_filter=lambda node: True):
-    """Saves a visualization of given nodes in a PNG file"""
-    graphviz = subprocess.Popen(['dot', '-Tpng', '-o', filename],
+    """Saves a visualization of given nodes in an image file"""
+    image_format = filename.split('.')[-1].lower()
+    graphviz = subprocess.Popen(['dot',
+                                 '-T{}'.format(image_format),
+                                 '-o', filename],
                                 stdin=subprocess.PIPE)
     source = '\n'.join(graphviz_lines(nodes, node_filter))
     graphviz.communicate(source.encode('utf-8'))
