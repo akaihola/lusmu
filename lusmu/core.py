@@ -340,7 +340,17 @@ class Node(BaseNode):
             self._set_dependents_dirty()
         return self._value
 
-    value = property(get_value)
+    def set_value(self, new_value):
+        """Set a new value for an Input
+
+        If this caused the value to change, paints dependent Nodes dirty and
+        returns the set of those dependent Nodes which are marked "triggered"
+        and should be re-evaluated.
+
+        """
+        return self._set_value(new_value, make_cache=True)
+
+    value = property(get_value, set_value)
 
     def _iterate_inputs(self):
         """Iterate through positional and keyword inputs"""
