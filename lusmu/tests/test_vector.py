@@ -25,8 +25,30 @@ class VectorEq(vector.VectorEquality):
         self._value = value
 
 
+def test_scalar_equality():
+    """Test cases for lusmu.vector.VectorEq._value_eq() with Python scalars"""
+
+    @parameterize
+    def check(value, other_value, expected):
+        """Scalar node value {0} == {1}: {2}"""
+        # pylint: disable=W0212
+        #         Access to a protected member of a client class
+
+        vector = VectorEq(value)
+        assert expected == vector._value_eq(other_value)
+
+    yield check(0, 0, True)
+    yield check(0, 1, False)
+    yield check(0, 0.0, True)
+    yield check(0, 1.0, False)
+    yield check(0.0, 0.0, True)
+    yield check(0.0, 1.0, False)
+    yield check('a', 'a', True)
+    yield check('a', 'b', False)
+
+
 def test_numpy_vector_equality():
-    """Test cases for lusmu.vector.VectorEq._value_eq()"""
+    """Test cases for lusmu.vector.VectorEq._value_eq() with numpy arrays"""
 
     @parameterize
     def check(value, other_value, expected):
@@ -49,6 +71,7 @@ def test_numpy_vector_equality():
 
 
 def test_pandas_vector_equality():
+    """Test cases for lusmu.vector.VectorEq._value_eq() with pandas Series"""
 
     @parameterize
     def check(value, index, other_value, other_index, expected):

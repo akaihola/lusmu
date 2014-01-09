@@ -63,6 +63,12 @@ class VectorEquality(object):
         #         (Instance of VectorEquality has no _value member)
         #         This class will be mixed into ones that have _value
 
+        if ((not isinstance(self._value, np.ndarray)
+             or not isinstance(other_value, np.ndarray))):
+            # The values are scalars, do a straight comparison
+            return self._value == other_value
+
+        # The values are numpy arrays or pandas Series, use vector_eq()
         if not vector_eq(self._value, other_value):
             return False
         if hasattr(self._value, 'index') and hasattr(other_value, 'index'):
