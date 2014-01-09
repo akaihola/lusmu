@@ -38,9 +38,13 @@ def vector_eq(a, b):
     # pylint: disable=C0103
     #         allow one-letter function arguments
 
-    if len(a) != len(b):
+    a_length, b_length = len(a), len(b)
+    if a_length != b_length:
         # comparing np.array([]) to np.array([1]) only works this way
         return False
+    if not a_length and not b_length:
+        # dtypes might be wrong for empty arrays
+        return True
     # Consider NaNs equal; see http://stackoverflow.com/a/10821267
     return np.all(ne.evaluate('(a==b)|((a!=a)&(b!=b))'))
 
