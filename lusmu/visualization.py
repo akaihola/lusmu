@@ -62,12 +62,20 @@ def graphviz_lines(nodes, node_filter):
         yield '    n{};'.format(id(node))
     yield '  }'
     for node in all_nodes:
-        yield ('  n{node} [label="[{name}]{action}"];'
+        shape = 'oval' if isinstance(node, Input) else 'box'
+        action = ('{br}{br}<FONT COLOR="#888888">{action}</FONT>'
+                  .format(br=' <BR ALIGN="LEFT"/>',
+                          action=get_action_name(node._action))
+                  if isinstance(node, Node)
+                  else '')
+        yield ('  n{node} '
+               '[label=<&#91;<B>{name}</B>&#93;'
+               '{action}>'
+               ' shape={shape}];'
                .format(node=id(node),
-                       name=node.name.replace(':', r'\n'),
-                       action='\\n\\n{}'.format(get_action_name(node._action))
-                       if isinstance(node, Node)
-                       else ''))
+                       name=node.name.replace(':', '<BR ALIGN="LEFT"/>'),
+                       action=action,
+                       shape=shape))
         yield '  edge [color=blue];'
         for other in node._dependents:
             if other in all_nodes:
