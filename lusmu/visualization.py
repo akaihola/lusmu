@@ -25,10 +25,10 @@ def collect_nodes(collected_nodes, *args):
     if not args:
         return
     node = args[0]
-    if node in collected_nodes:
-        return
     rest = args[1:]
     collect_nodes(collected_nodes, *rest)
+    if node in collected_nodes:
+        return
     collected_nodes.add(node)
     collect_nodes(collected_nodes, *node._dependents)
     if isinstance(node, Node):
