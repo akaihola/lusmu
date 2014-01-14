@@ -62,21 +62,30 @@ class VectorEquality(object):
         # pylint: disable=E1101
         #         (Instance of VectorEquality has no _value member)
         #         This class will be mixed into ones that have _value
-
-        if ((not isinstance(self._value, np.ndarray)
-             or not isinstance(other_value, np.ndarray))):
-            # The values are scalars, do a straight comparison
-            return self._value == other_value
-
-        # The values are numpy arrays or pandas Series, use vector_eq()
-        if not vector_eq(self._value, other_value):
-            return False
-        if hasattr(self._value, 'index') and hasattr(other_value, 'index'):
-            # The values are Pandas Series with time indices. Compare time
-            # indices, too.
-            return vector_eq(self._value.index.values.astype(float),
-                             other_value.index.values.astype(float))
-        return True
+        a = self._value
+        b = other_value
+        try:
+            if type(a) != type(b):
+                return False
+            if len(a)==0 and len(b)==0:
+                return True
+            if a.shape != b.shape:
+                return False
+            if not np.all(ne.evaluate('(a==b)|((a!=a)&(b!=b))')):
+                return False
+            if hasattr(a, 'index') and hasattr(b, 'index'):
+                # The values are Pandas Series with time indices. Compare time
+                # indices, too.
+                a_ind = VectorEquality()
+                # FIXME: We should support non-number indices as well!
+                a_ind._value = a.index.values.astype(float)
+                return a_ind._value_eq(b.index.values.astype(float))
+            return True
+        except (AttributeError, TypeError):
+            # not pandas or numpy objects
+            return (
+                type(self._value) == type(other_value) and
+                self._value == other_value)
 
 
 class NodePickleMixin(object):

@@ -39,7 +39,7 @@ def test_scalar_equality():
 
     yield check(0, 0, True)
     yield check(0, 1, False)
-    yield check(0, 0.0, True)
+    yield check(0, 0.0, False)
     yield check(0, 1.0, False)
     yield check(0.0, 0.0, True)
     yield check(0.0, 1.0, False)
@@ -64,10 +64,30 @@ def test_numpy_vector_equality():
     yield check([], [2], False)
     yield check([3], [3], True)
     yield check([4], [4, 5], False)
+    yield check([4], [4, 4], False)
     yield check([4, 5], [4], False)
     yield check([6, 7, 8], [6, 7, 8], True)
     yield check([9, np.nan], [9, np.nan], True)
     yield check([9, 10], [9, np.nan], False)
+
+
+def test_numpy_vector_equality_others():
+    """Test cases for lusmu.vector.VectorEq._value_eq() with complex data types
+    """
+
+    @parameterize
+    def check(value, other_value, expected):
+        """Vector node value {0} == {1}: {2}"""
+        # pylint: disable=W0212
+        #         Access to a protected member of a client class
+
+        vector = VectorEq(value)
+        assert expected == vector._value_eq(other_value)
+
+    yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,4]]), True)
+    yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,5]]), False)
+    yield check(np.array([[1,2],[3,4]]), [[1,2],[3,4]], False)
+    yield check(np.array([[1,2]]), np.array([[1,2],[1,2]]), False)
 
 
 def test_pandas_vector_equality():
@@ -109,6 +129,28 @@ def test_pandas_vector_equality():
     yield check([9, 10], ['2013-10-15', '2013-10-16'],
                 [9, np.nan], ['2013-10-15', '2013-10-16'],
                 False)
+
+
+def test_mixed_vector_equality():
+    """Test cases for lusmu.vector.VectorEq._value_eq() with pandas Series"""
+
+    @parameterize
+    def check(value, index, other_value, expected):
+        """Series node value {0}/{1} == {2}: {3}"""
+        # pylint: disable=W0212
+        #         Access to a protected member of a client class
+        this = pd.Series(value, index=pd.to_datetime(index))
+        other = np.array(other_value)
+        vector = VectorEq(this)
+
+        assert expected == vector._value_eq(other)
+
+    yield check([], [], [], False)
+    yield check([1], ['2013-10-15'], [], False)
+    yield check([], [], [2], False)
+    yield check([3], ['2013-10-15'], [3], False)
+    yield check([4], ['2013-10-15'], [4, 5], False)
+    yield check([4, 5], ['2013-10-15', '2013-10-16'], [4], False)
 
 
 class InputSetValueTestCase(TestCase):
