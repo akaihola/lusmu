@@ -1,4 +1,4 @@
-astroid==1.0.0
+astroid==1.0.1
 coverage==3.6
 joblib==0.6.5
 logilab-common==0.60.0
