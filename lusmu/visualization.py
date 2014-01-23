@@ -46,7 +46,25 @@ def get_action_name(action):
     return action.__class__.__name__
 
 
-def graphviz_lines(nodes, node_filter):
+def format_node_default(node_id, node):
+    shape = 'oval' if isinstance(node, Input) else 'box'
+    action = ('{br}{br}<FONT COLOR="#888888">{action}</FONT>'
+              .format(br=' <BR ALIGN="LEFT"/>',
+                      action=get_action_name(node._action))
+              if isinstance(node, Node)
+              else '')
+    yield ('  {node_id} '
+           '[label=<<B>{name}</B>'
+           '{action}>'
+           ' shape={shape}];'
+           .format(node_id=node_id,
+                   name=node.name.replace(':', ':<BR ALIGN="LEFT"/>'),
+                   action=action,
+                   shape=shape))
+    yield '  edge [color=blue];'
+
+
+def graphviz_lines(nodes, node_filter, format_node):
     """Generate source lines for a Graphviz graph definition"""
     all_nodes = set()
     collect_nodes(all_nodes, *nodes)
@@ -62,21 +80,8 @@ def graphviz_lines(nodes, node_filter):
         yield '    n{};'.format(id(node))
     yield '  }'
     for node in all_nodes:
-        shape = 'oval' if isinstance(node, Input) else 'box'
-        action = ('{br}{br}<FONT COLOR="#888888">{action}</FONT>'
-                  .format(br=' <BR ALIGN="LEFT"/>',
-                          action=get_action_name(node._action))
-                  if isinstance(node, Node)
-                  else '')
-        yield ('  n{node} '
-               '[label=<&#91;<B>{name}</B>&#93;'
-               '{action}>'
-               ' shape={shape}];'
-               .format(node=id(node),
-                       name=node.name.replace(':', '<BR ALIGN="LEFT"/>'),
-                       action=action,
-                       shape=shape))
-        yield '  edge [color=blue];'
+        for line in format_node('n{}'.format(id(node)), node):
+            yield line
         for other in node._dependents:
             if other in all_nodes:
                 yield ('  n{node} -> n{other};'
@@ -84,13 +89,17 @@ def graphviz_lines(nodes, node_filter):
     yield '}'
 
 
-def visualize_graph(nodes, filename, node_filter=lambda node: True):
+def visualize_graph(nodes, filename,
+                    node_filter=lambda node: True,
+                    format_node=format_node_default):
     """Saves a visualization of given nodes in an image file"""
     image_format = filename.split('.')[-1].lower()
     graphviz = subprocess.Popen(['dot',
                                  '-T{}'.format(image_format),
                                  '-o', filename],
                                 stdin=subprocess.PIPE)
-    source = '\n'.join(graphviz_lines(nodes, node_filter))
+    source = '\n'.join(graphviz_lines(nodes,
+                                      node_filter,
+                                      format_node))
     graphviz.communicate(source.encode('utf-8'))
     return source
