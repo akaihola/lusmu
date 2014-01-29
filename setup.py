@@ -10,7 +10,7 @@ from setuptools import setup
 
 
 setup(name='lusmu',
-      version='0.2.1.dev',
+      version='0.2.1',
       packages=['lusmu'],
       author='Antti Kaihola',
       author_email='antti.kaihola@eniram.fi',
