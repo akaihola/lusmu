@@ -23,9 +23,6 @@ import numpy as np
 import pandas as pd
 
 
-_LOGGER = logging.getLogger('lusmu.vector')
-
-
 def vector_eq(a, b):
     """Return True if vectors are equal, comparing NaNs correctly too
 
@@ -141,5 +138,6 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
         """Log a message when evaluating a node"""
         # pylint: disable=E1101
         #         self.name comes from lusmu
-        _LOGGER.debug('[%s]._evaluate()', self.name)
+        logger = logging.getLogger(__name__)
+        logger.debug('[%s]._evaluate()', self.name)
         return super(Node, self)._evaluate()
