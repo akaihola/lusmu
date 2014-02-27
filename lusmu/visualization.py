@@ -74,6 +74,7 @@ def graphviz_lines(nodes, node_filter, format_node):
     input_nodes = [n for n in all_nodes if isinstance(n, Input)]
 
     yield 'digraph gr {'
+    yield '  graph [ dpi = 48 ];'
     yield '  rankdir = LR;'
     yield '  { rank = source;'
     for node in input_nodes:
