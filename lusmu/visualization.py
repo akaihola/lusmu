@@ -11,6 +11,8 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 #         Allow * and ** magic
 
 from __future__ import print_function, unicode_literals
+import re
+from textwrap import dedent
 
 from lusmu.core import Input, Node
 import subprocess
@@ -103,4 +105,23 @@ def visualize_graph(nodes, filename,
                                       node_filter,
                                       format_node))
     graphviz.communicate(source.encode('utf-8'))
+
+    # Add some CSS to SVG images
+    if image_format == 'svg':
+        with open(filename) as svg_file:
+            svg = svg_file.read()
+        svg = re.sub(r'(<svg\s[^>]*>)',
+                     dedent(r'''
+                     \1
+                     <style type="text/css"><![CDATA[
+                         g.node:hover {
+                             stroke-width: 2;
+                         }
+                     ]]></style>
+                     '''),
+                     svg,
+                     re.S)
+        with open(filename, 'w') as svg_file:
+            svg_file.write(svg)
+
     return source
