@@ -84,7 +84,7 @@ class BaseNode(object):
         if dependent not in self._dependents:
             self._dependents.add(dependent)
             if self._value is not DIRTY:
-                dependent._set_value(DIRTY, make_cache=False)
+                dependent._set_value(DIRTY, get_triggered=False)
             _TRIGGERED_CACHE.clear()
 
     def _disconnect(self, dependent):
@@ -100,19 +100,19 @@ class BaseNode(object):
         if dependent in self._dependents:
             self._dependents.remove(dependent)
             if self._value is not DIRTY:
-                dependent._set_value(DIRTY, make_cache=False)
+                dependent._set_value(DIRTY, get_triggered=False)
             _TRIGGERED_CACHE.clear()
 
-    def _set_value(self, value, make_cache=True):
+    def _set_value(self, value, get_triggered=True):
         """Set a new value for this Node or Input
 
         If this caused the value to change, paints dependent Nodes dirty and
         returns the set of those dependent Nodes which are marked "triggered"
         and should be re-evaluated.
 
-        When called by ``set_value`` from external code, the ``make_cache``
+        When called by ``set_value`` from external code, the ``get_triggered``
         argument must be ``True`` so the return value is cached.  Internal
-        calls set ``make_cache=False`` so memory isn't wasted for caching the
+        calls set ``get_triggered=False`` so memory isn't wasted for caching the
         triggered dependents of intermediate Nodes.
 
         This private method can be used as a debugging tool to set values of
@@ -131,7 +131,8 @@ class BaseNode(object):
         # paint the dependent Nodes dirty
         self._value = value
         self._set_dependents_dirty()
-        return self._get_triggered_dependents(make_cache=make_cache)
+        if get_triggered:
+            return self._get_triggered_dependents()
 
     def _value_eq(self, other_value):
         return self._value == other_value
@@ -172,7 +173,7 @@ class BaseNode(object):
 
         """
         for dependent in self._dependents:
-            dependent._set_value(DIRTY, make_cache=False)
+            dependent._set_value(DIRTY, get_triggered=False)
 
     def _generate_name(self):
         """Generate a unique name for this Node or Input object
@@ -231,7 +232,7 @@ class Input(BaseNode):
         and should be re-evaluated.
 
         """
-        return self._set_value(new_value, make_cache=True)
+        return self._set_value(new_value, get_triggered=True)
 
     value = property(get_value, set_value)
 
@@ -348,7 +349,7 @@ class Node(BaseNode):
         and should be re-evaluated.
 
         """
-        return self._set_value(new_value, make_cache=True)
+        return self._set_value(new_value, get_triggered=True)
 
     value = property(get_value, set_value)
 

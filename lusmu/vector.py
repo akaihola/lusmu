@@ -118,12 +118,12 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
         if isinstance(value, pd.Series) and len(value):
             return value.index[-1]
 
-    def _set_value(self, value, make_cache=True):
+    def _set_value(self, value, get_triggered=True):
         """Keep track of latest timestamp processed"""
         new_last_timestamp = self._get_max_timestamp(value)
         if new_last_timestamp:
             self.last_timestamp = new_last_timestamp
-        return super(Input, self)._set_value(value, make_cache=make_cache)
+        return super(Input, self)._set_value(value, get_triggered=get_triggered)
 
 
 class Node(NodePickleMixin, VectorEquality, LusmuNode):
