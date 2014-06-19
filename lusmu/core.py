@@ -11,6 +11,7 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 #         Allow * and ** magic
 
 from collections import defaultdict
+from functools import total_ordering
 import itertools
 import logging
 import sys
@@ -237,6 +238,7 @@ class Input(BaseNode):
     value = property(get_value, set_value)
 
 
+@total_ordering
 class Node(BaseNode):
     """The Node class for reactive programming
 
@@ -378,6 +380,9 @@ class Node(BaseNode):
         return template.format(class_name=self.__class__.__name__,
                                action_name=action_name,
                                counter=counters[self.__class__, action_name])
+
+    def __lt__(self, other):
+        return self.name < other.name
 
 
 def update_inputs_iter(inputs_and_values):
