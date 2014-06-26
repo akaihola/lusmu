@@ -4,6 +4,8 @@ Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
 this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 """
+from lusmu.core import DIRTY
+from lusmu.vector import Input
 
 from lusmu import vector
 from lusmu.tests.tools import parameterize
@@ -243,3 +245,21 @@ def test_pickling():
                  == {'foo': 'bar'}))
     yield check(vector.Node, 'extra_attribute', 42.0,
                 AttributeError)
+
+
+def test_input_equality():
+    @parameterize
+    def check(_, a, b, expected):
+        """Input.__eq__ is {3} for {0}"""
+        result = a == b
+        eq_(expected, result)
+
+    yield check('unnamed (auto-named) dirty value inputs',
+                Input(name=None, value=DIRTY), Input(name=None, value=DIRTY),
+                False)
+    yield check('non-matching names',
+                Input(name='a', value=DIRTY), Input(name='b', value=DIRTY),
+                False)
+    yield check('named vs. unnamed node',
+                Input(name='a', value=DIRTY), Input(name=None, value=DIRTY),
+                False)

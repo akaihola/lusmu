@@ -125,6 +125,10 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
             self.last_timestamp = new_last_timestamp
         return super(Input, self)._set_value(value, get_triggered=get_triggered)
 
+    def __eq__(self, other):
+        """Equality comparison provided for unit test convenience"""
+        return self.name == other.name and self._value_eq(other.value)
+
 
 class Node(NodePickleMixin, VectorEquality, LusmuNode):
     """Vector compatible Lusmu Node"""
