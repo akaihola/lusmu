@@ -145,3 +145,7 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
         logger = logging.getLogger(__name__)
         logger.debug('[%s]._evaluate()', self.name)
         return super(Node, self)._evaluate()
+
+    def __eq__(self, other):
+        """Equality comparison provided for unit test convenience"""
+        return self.__dict__ == other.__dict__

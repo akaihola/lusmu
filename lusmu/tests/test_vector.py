@@ -39,6 +39,8 @@ def test_scalar_equality():
         vector = VectorEq(value)
         assert expected == vector._value_eq(other_value)
 
+    yield check(DIRTY, DIRTY, True)
+    yield check(DIRTY, 0, False)
     yield check(0, 0, True)
     yield check(0, 1, False)
     yield check(0, 0.0, False)
@@ -86,6 +88,7 @@ def test_numpy_vector_equality_others():
         vector = VectorEq(value)
         assert expected == vector._value_eq(other_value)
 
+    yield check(DIRTY, np.array([[1,2],[3,4]]), False)
     yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,4]]), True)
     yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,5]]), False)
     yield check(np.array([[1,2],[3,4]]), [[1,2],[3,4]], False)
@@ -161,6 +164,11 @@ class InputSetValueTestCase(TestCase):
 
         eq_(None, inp.last_timestamp)
 
+    def test_dirty_value(self):
+        inp = vector.Input(value=DIRTY)
+
+        eq_(None, inp.last_timestamp)
+
     def test_initial_value(self):
         inp = vector.Input(value=pd.Series([1, 2], [1001, 1002]))
 
@@ -217,6 +225,8 @@ def test_pickling():
                 'constant')
     yield check(vector.Input, '_value', 42.0,
                 42.0)
+    yield check(vector.Input, '_value', DIRTY,
+                DIRTY)
     yield check(vector.Input, '_value', np.array([42.0]),
                 np.array([42.0]))
     yield check(vector.Input, 'last_timestamp', 1234,
