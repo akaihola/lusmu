@@ -19,4 +19,4 @@ setup(name='lusmu',
       keywords='eniram dataflow reactive',
       url='https://github.com/akaihola/lusmu',
       test_suite='nose.collector',
-      tests_require=['nose==1.3.0'])
+      tests_require=['mock==1.0.1', 'nose==1.3.0'])
