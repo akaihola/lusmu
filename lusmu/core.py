@@ -19,6 +19,10 @@ import sys
 
 LOG = logging.getLogger('lusmu.base')
 
+# When developing, change this to True in order to verify the type consistency
+# of Lusmu graphs.
+VERIFY_OUTPUT_TYPES = False
+
 
 if sys.version_info[0] == 2:
     def items(dictionary):
@@ -309,7 +313,14 @@ class Node(BaseNode):
                              for i in self._positional_inputs]
         keyword_values = {name: i.get_value()
                           for name, i in items(self._keyword_inputs)}
-        return self._action(*positional_values, **keyword_values)
+        value = self._action(*positional_values, **keyword_values)
+        if ((VERIFY_OUTPUT_TYPES
+             and getattr(self._action, 'output_type', None) is not None)):
+            # Output type checking has been enabled, and the node's action
+            # does specify the expected output type. Check that the calculated
+            # value matches that type.
+            self._verify_output_type(value)
+        return value
 
     @staticmethod
     def inputs(*args, **kwargs):
@@ -328,6 +339,33 @@ class Node(BaseNode):
 
         """
         return args, kwargs
+
+    def _verify_output_type(self, value):
+        """Assert that the given value matches the action's output type
+
+        This check should be run only in development if the developer wants to
+        ensure the consistency of a graph's types.
+
+        This method may only be called if the node's action has a non-None
+        ``output_type`` attribute.
+
+        Arguments
+        ---------
+        value: The value whose type is to be checked
+
+        Raises
+        ------
+        TypeError: The value doesn't match the desired output type of the
+                   node's action
+
+        """
+        if not isinstance(value, self._action.output_type):
+            raise TypeError(
+                "The output value type {value_type!r} for [{self.name}]\n"
+                "doesn't match the expected type "
+                '{self._action.output_type.__name__!r} for action '
+                '"{self._action.name}".'
+                .format(value_type=type(value).__name__, self=self))
 
     def set_inputs(self, *args, **kwargs):
         """Replace current positional and keyword inputs"""

@@ -4,17 +4,22 @@ Copyright 2013 Eniram Ltd. See the LICENSE file at the top-level directory of
 this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 """
-from lusmu.core import DIRTY
-from lusmu.vector import Input
+import tempfile
+from unittest import TestCase
 
-from lusmu import vector
-from lusmu.tests.tools import parameterize
+from mock import patch
 import joblib
 from nose.tools import assert_raises, eq_
 import numpy as np
 import pandas as pd
-import tempfile
-from unittest import TestCase
+
+from lusmu.core import DIRTY
+from lusmu.tests.test_core import (NoOutputTypeAction,
+                                   NoneOutputTypeAction,
+                                   IntOutputTypeAction)
+from lusmu.vector import Input
+from lusmu import vector
+from lusmu.tests.tools import parameterize
 
 
 def sum(*args):
@@ -273,3 +278,66 @@ def test_input_equality():
     yield check('named vs. unnamed node',
                 Input(name='a', value=DIRTY), Input(name=None, value=DIRTY),
                 False)
+
+
+class VectorNodeVerifyOutputTypeTestCase(TestCase):
+    def setUp(self):
+        self.input = Input()
+
+    def test_disabled_and_no_output_type(self):
+        node = vector.Node(action=NoOutputTypeAction(),
+                           inputs=vector.Node.inputs(self.input))
+        self.input.value = np.array(['42'])
+        node._evaluate()
+
+    def test_disabled_and_none_output_type(self):
+        node = vector.Node(action=NoneOutputTypeAction(),
+                           inputs=vector.Node.inputs(self.input))
+        self.input.value = np.array(['42'])
+        node._evaluate()
+
+    def test_disabled_and_correct_output_type(self):
+        node = vector.Node(action=IntOutputTypeAction(),
+                           inputs=vector.Node.inputs(self.input))
+        self.input.value = np.array([42])
+        node._evaluate()
+
+    def test_disabled_and_wrong_output_type(self):
+        node = vector.Node(action=IntOutputTypeAction(),
+                           inputs=vector.Node.inputs(self.input))
+        self.input.value = np.array(['42'])
+        node._evaluate()
+
+    def test_enabled_and_no_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            node = vector.Node(action=NoOutputTypeAction(),
+                               inputs=vector.Node.inputs(self.input))
+            self.input.value = np.array(['42'])
+            node._evaluate()
+
+    def test_enabled_and_none_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            node = vector.Node(action=NoneOutputTypeAction(),
+                               inputs=vector.Node.inputs(self.input))
+            self.input.value = np.array(['42'])
+            node._evaluate()
+
+    def test_enabled_and_correct_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            node = vector.Node(action=IntOutputTypeAction(),
+                               inputs=vector.Node.inputs(self.input))
+            self.input.value = np.array([42])
+            node._evaluate()
+
+    def test_enabled_and_wrong_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            with assert_raises(TypeError) as exc:
+                node = vector.Node(name='node',
+                                   action=IntOutputTypeAction(),
+                                   inputs=vector.Node.inputs(self.input))
+                self.input.value = np.array(['42'])
+                node._evaluate()
+            self.assertEqual(
+                "The output value type 'string_' for [node]\n"
+                "doesn't match the expected type 'int' for action "
+                '"int_action".', str(exc.exception))

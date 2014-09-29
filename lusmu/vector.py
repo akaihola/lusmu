@@ -138,6 +138,24 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
                           '_positional_inputs',
                           '_keyword_inputs'))
 
+    def _verify_output_type(self, value):
+        """Assert that the given value matches the action's output type
+
+        This adds NumPy/Pandas dtype support to output type verification.
+
+        """
+        if hasattr(value, 'dtype'):
+            if not issubclass(value.dtype.type, self._action.output_type):
+                raise TypeError(
+                    "The output value type {value.dtype.type.__name__!r} "
+                    "for [{self.name}]\n"
+                    "doesn't match the expected type "
+                    "{self._action.output_type.__name__!r} for action "
+                    '"{self._action.name}".'
+                    .format(value=value, self=self))
+        else:
+            super(Node, self)._verify_output_type(value)
+
     def _evaluate(self):
         """Log a message when evaluating a node"""
         # pylint: disable=E1101

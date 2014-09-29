@@ -14,11 +14,13 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 import gc
 from unittest import TestCase
+from nose.tools import assert_raises
 from lusmu.core import (Node,
                         DIRTY,
                         Input,
                         update_inputs_get_triggered,
                         _TRIGGERED_CACHE)
+from mock import patch
 import weakref
 
 
@@ -363,3 +365,86 @@ class HomeAutomationTestCase(TestCase):
                                     (brightness_2, 40)])
 
         self.assertEqual([450, 446], lamp_power_changes)
+
+
+class MockActionBase(object):
+    def __call__(self, data):
+        return data
+
+
+class NoOutputTypeAction(MockActionBase):
+    name = 'no'
+    pass
+
+
+class NoneOutputTypeAction(MockActionBase):
+    name = 'none'
+    output_type = None
+
+
+class IntOutputTypeAction(MockActionBase):
+    name = 'int_action'
+    output_type = int
+
+
+class NodeVerifyOutputTypeTestCase(TestCase):
+    def setUp(self):
+        self.input = Input()
+
+    def test_disabled_and_no_output_type(self):
+        node = Node(action=NoOutputTypeAction(),
+                    inputs=Node.inputs(self.input))
+        self.input.value = '42'
+        node._evaluate()
+
+    def test_disabled_and_none_output_type(self):
+        node = Node(action=NoneOutputTypeAction(),
+                    inputs=Node.inputs(self.input))
+        self.input.value = '42'
+        node._evaluate()
+
+    def test_disabled_and_correct_output_type(self):
+        node = Node(action=IntOutputTypeAction(),
+                    inputs=Node.inputs(self.input))
+        self.input.value = 42
+        node._evaluate()
+
+    def test_disabled_and_wrong_output_type(self):
+        node = Node(action=IntOutputTypeAction(),
+                    inputs=Node.inputs(self.input))
+        self.input.value = '42'
+        node._evaluate()
+
+    def test_enabled_and_no_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            node = Node(action=NoOutputTypeAction(),
+                        inputs=Node.inputs(self.input))
+            self.input.value = '42'
+            node._evaluate()
+
+    def test_enabled_and_none_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            node = Node(action=NoneOutputTypeAction(),
+                        inputs=Node.inputs(self.input))
+            self.input.value = '42'
+            node._evaluate()
+
+    def test_enabled_and_correct_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            node = Node(action=IntOutputTypeAction(),
+                        inputs=Node.inputs(self.input))
+            self.input.value = 42
+            node._evaluate()
+
+    def test_enabled_and_wrong_output_type(self):
+        with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
+            with assert_raises(TypeError) as exc:
+                node = Node(name='node',
+                            action=IntOutputTypeAction(),
+                            inputs=Node.inputs(self.input))
+                self.input.value = '42'
+                node._evaluate()
+            self.assertEqual(
+                "The output value type 'str' for [node]\n"
+                "doesn't match the expected type 'int' for action "
+                '"int_action".', str(exc.exception))
