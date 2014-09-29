@@ -24,7 +24,10 @@ def parameterize(func):
     """
     def get_test_call_info(*args):
         """Set test function description and return yieldable tuple"""
-        func.description = func.__doc__.format(*args)
+        if func.__doc__:
+            func.description = func.__doc__.format(*args)
+        else:
+            func.description = func.__doc__
         return (func,) + args
 
     return get_test_call_info
