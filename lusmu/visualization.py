@@ -24,17 +24,12 @@ def collect_nodes(collected_nodes, *args):
     Walks dependent Nodes and inputs recursively.
 
     """
-    if not args:
-        return
-    node = args[0]
-    rest = args[1:]
-    collect_nodes(collected_nodes, *rest)
-    if node in collected_nodes:
-        return
-    collected_nodes.add(node)
-    collect_nodes(collected_nodes, *node._dependents)
-    if isinstance(node, Node):
-        collect_nodes(collected_nodes, *node._iterate_inputs())
+    for node in args:
+        if node not in collected_nodes:
+            collected_nodes.add(node)
+            collect_nodes(collected_nodes, *node._dependents)
+            if isinstance(node, Node):
+                collect_nodes(collected_nodes, *node._iterate_inputs())
 
 
 def get_action_name(action):
