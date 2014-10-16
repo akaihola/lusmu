@@ -28,8 +28,8 @@ to be used in the home automation system.
         return sum(args)
 
     def inverse(max_value):
-        def _inverse(value):
-            return max_value - value
+        def _inverse(data):
+            return max_value - data
         return _inverse
 
 The output from two temperature sensors are averaged,
@@ -107,17 +107,17 @@ the relative humidity is calculated:
     humidity_normalized = OpNode(op=lambda sensor_value: 100.0 * (1.0 - math.log(sensor_value, 255)),
                                  inputs=OpNode.inputs(humidity))
 
-Initially the value of all nodes is undefined.
+Initially the data of all nodes is undefined.
 The :obj:`lusmu.core.DIRTY` special object is used
-to denote an undefined value.
-The private :attr:`~lusmu.core.OpNode._value` attribute
-can be inspected to see the cached value of the node
+to denote undefined data.
+The private :attr:`~lusmu.core.OpNode._data` attribute
+can be inspected to see the cached data of the node
 without triggering lazy evaluation::
 
-    >>> temperature_avg._value
+    >>> temperature_avg._data
     <lusmu.core.DIRTY>
 
-Values are fed into source nodes
+Data is fed into source nodes
 using the :func:`~lusmu.core.update_source_nodes` function::
 
     >>> update_source_nodes([(temperature_1, 25.0),
@@ -131,31 +131,31 @@ using the :func:`~lusmu.core.update_source_nodes` function::
 Since the heater and lamp control nodes
 are defined as auto-calculated (``triggered=True``),
 all nodes on those dependency paths are evaluated
-when values of nodes are updated::
+when data of nodes are updated::
 
-    >>> temperature_avg._value
+    >>> temperature_avg._data
     23.75
-    >>> brightness_sum._value
+    >>> brightness_sum._data
     210
 
 On the other hand, the relative humidity value is not auto-calculated::
 
-    >>> humidity_normalized._value
+    >>> humidity_normalized._data
     <lusmu.core.DIRTY>
 
 The dependency path from the source node to the requested humidity value
 is only evaluated when needed.
-The :attr:`lusmu.core.OpNode.value` property triggers evaluation::
+The :attr:`lusmu.core.OpNode.data` property triggers evaluation::
 
-    >>> humidity_normalized.value
+    >>> humidity_normalized.data
     29.40196809721851
 
-Unchanged values don't trigger evaluation:
+Unchanged data doesn't trigger evaluation:
 
     >>> update_source_nodes([(temperature_1, 25.0),
     ...                      (temperature_2, 22.5)})
 
-Changing the values does::
+Changing data does::
 
     >>> update_source_nodes([(temperature_1, 21.0),
     ...                      (temperature_2, 18.5)])

@@ -47,9 +47,9 @@ def vector_eq(a, b):
 
 
 class VectorEquality(object):
-    """Mixin to extend Lusmu SrcNodes and OpNodes to work with vector values"""
-    def _value_eq(self, other_value):
-        """Replace the equality test of SrcNode/OpNode values
+    """Mixin to extend Lusmu SrcNodes and OpNodes to work with vector data"""
+    def _data_eq(self, other_data):
+        """Replace the equality test of SrcNode/OpNode data
 
         Lusmu uses the ``==`` operator by default.  It doesn't work correctly
         with vectors which have more than one value – ``bool(vec1 == vec2)``
@@ -57,10 +57,10 @@ class VectorEquality(object):
 
         """
         # pylint: disable=E1101
-        #         (Instance of VectorEquality has no _value member)
-        #         This class will be mixed into ones that have _value
-        a = self._value
-        b = other_value
+        #         (Instance of VectorEquality has no _data member)
+        #         This class will be mixed into ones that have _data
+        a = self._data
+        b = other_data
         try:
             if type(a) != type(b):
                 return False
@@ -75,19 +75,19 @@ class VectorEquality(object):
                 # indices, too.
                 a_ind = VectorEquality()
                 # FIXME: We should support non-number indices as well!
-                a_ind._value = a.index.values.astype(float)
-                return a_ind._value_eq(b.index.values.astype(float))
+                a_ind._data = a.index.values.astype(float)
+                return a_ind._data_eq(b.index.values.astype(float))
             return True
         except (AttributeError, TypeError):
             # not pandas or numpy objects
             return (
-                type(self._value) == type(other_value) and
-                self._value == other_value)
+                type(self._data) == type(other_data) and
+                self._data == other_data)
 
 
 class NodePickleMixin(object):
     """Mixin defining the attributes to pickle for all node types"""
-    _state_attributes = 'name', '_dependents', '_value'
+    _state_attributes = 'name', '_dependents', '_data'
 
     def __getstate__(self):
         return {key: getattr(self, key)
@@ -97,38 +97,38 @@ class NodePickleMixin(object):
 class SrcNode(NodePickleMixin, VectorEquality, LusmuSrcNode):
     """Vector compatible Lusmu source node
 
-    The value of the source node is always set dirty when unpickling.
+    The data value of the source node is always set dirty when unpickling.
 
     """
     _state_attributes = NodePickleMixin._state_attributes + ('last_timestamp',)
 
-    def __init__(self, name=None, value=DIRTY):
-        super(SrcNode, self).__init__(name=name, value=value)
-        self.last_timestamp = self._get_max_timestamp(value)
+    def __init__(self, name=None, data=DIRTY):
+        super(SrcNode, self).__init__(name=name, data=data)
+        self.last_timestamp = self._get_max_timestamp(data)
 
     @staticmethod
-    def _get_max_timestamp(value):
+    def _get_max_timestamp(data):
         """Return the latest timestamp in the Series
 
         Arguments
         ---------
-        value: pandas.Series with a timestamp index
+        data: pandas.Series with a timestamp index
 
         """
-        if isinstance(value, pd.Series) and len(value):
-            return value.index[-1]
+        if isinstance(data, pd.Series) and len(data):
+            return data.index[-1]
 
-    def _set_value(self, value, get_triggered=True):
+    def _set_data(self, data, get_triggered=True):
         """Keep track of latest timestamp processed"""
-        new_last_timestamp = self._get_max_timestamp(value)
+        new_last_timestamp = self._get_max_timestamp(data)
         if new_last_timestamp:
             self.last_timestamp = new_last_timestamp
-        return super(SrcNode, self)._set_value(value,
-                                             get_triggered=get_triggered)
+        return super(SrcNode, self)._set_data(data,
+                                              get_triggered=get_triggered)
 
     def __eq__(self, other):
         """Equality comparison provided for unit test convenience"""
-        return self.name == other.name and self._value_eq(other.value)
+        return self.name == other.name and self._data_eq(other.data)
 
     # In Python 3, the __hash__ method needs to be defined when __eq__ is
     # defined:
@@ -143,30 +143,30 @@ class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
                           '_positional_inputs',
                           '_keyword_inputs'))
 
-    def _verify_output_type(self, value):
-        """Assert that the given value matches the operation's output type
+    def _verify_output_type(self, data):
+        """Assert that the given data matches the operation's output type
 
         This adds NumPy/Pandas dtype support to output type verification.
 
         """
-        if hasattr(value, 'dtype'):
-            if not issubclass(value.dtype.type, self._operation.output_type):
+        if hasattr(data, 'dtype'):
+            if not issubclass(data.dtype.type, self._operation.output_type):
                 output_type = self._operation.output_type
                 output_type_name = ([v.__name__ for v in output_type]
                                     if isinstance(output_type, tuple)
                                     else output_type.__name__)
 
                 raise TypeError(
-                    "The output value type {value.dtype.type.__name__!r} "
+                    "The output data type {data.dtype.type.__name__!r} "
                     "for [{self.name}]\n"
                     "doesn't match the expected type "
                     "{output_type_name} for operation "
                     '"{self._operation.name}".'
                     .format(output_type_name=output_type_name,
-                            value=value,
+                            data=data,
                             self=self))
         else:
-            super(OpNode, self)._verify_output_type(value)
+            super(OpNode, self)._verify_output_type(data)
 
     def _evaluate(self):
         """Log a message when evaluating a node"""

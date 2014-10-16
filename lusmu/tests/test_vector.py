@@ -28,21 +28,21 @@ def sum(*args):
 
 class VectorEq(vector.VectorEquality):
     """Mock node class implementing the vector equality test"""
-    def __init__(self, value):
-        self._value = value
+    def __init__(self, data):
+        self._data = data
 
 
 def test_scalar_equality():
-    """Test cases for lusmu.vector.VectorEq._value_eq() with Python scalars"""
+    """Test cases for lusmu.vector.VectorEq._data_eq() with Python scalars"""
 
     @parameterize
-    def check(value, other_value, expected):
-        """Scalar node value {0} == {1}: {2}"""
+    def check(data, other_data, expected):
+        """Scalar node data {0} == {1}: {2}"""
         # pylint: disable=W0212
         #         Access to a protected member of a client class
 
-        vector = VectorEq(value)
-        assert expected == vector._value_eq(other_value)
+        vector = VectorEq(data)
+        assert expected == vector._data_eq(other_data)
 
     yield check(DIRTY, DIRTY, True)
     yield check(DIRTY, 0, False)
@@ -57,16 +57,16 @@ def test_scalar_equality():
 
 
 def test_numpy_vector_equality():
-    """Test cases for lusmu.vector.VectorEq._value_eq() with numpy arrays"""
+    """Test cases for lusmu.vector.VectorEq._data_eq() with numpy arrays"""
 
     @parameterize
-    def check(value, other_value, expected):
-        """Vector node value {0} == {1}: {2}"""
+    def check(data, other_data, expected):
+        """Vector node data {0} == {1}: {2}"""
         # pylint: disable=W0212
         #         Access to a protected member of a client class
 
-        vector = VectorEq(np.array(value))
-        assert expected == vector._value_eq(np.array(other_value))
+        vector = VectorEq(np.array(data))
+        assert expected == vector._data_eq(np.array(other_data))
 
     yield check([], [], True)
     yield check([1], [], False)
@@ -81,17 +81,17 @@ def test_numpy_vector_equality():
 
 
 def test_numpy_vector_equality_others():
-    """Test cases for lusmu.vector.VectorEq._value_eq() with complex data types
+    """Test cases for lusmu.vector.VectorEq._data_eq() with complex data types
     """
 
     @parameterize
-    def check(value, other_value, expected):
-        """Vector node value {0} == {1}: {2}"""
+    def check(data, other_data, expected):
+        """Vector node data {0} == {1}: {2}"""
         # pylint: disable=W0212
         #         Access to a protected member of a client class
 
-        vector = VectorEq(value)
-        assert expected == vector._value_eq(other_value)
+        vector = VectorEq(data)
+        assert expected == vector._data_eq(other_data)
 
     yield check(DIRTY, np.array([[1,2],[3,4]]), False)
     yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,4]]), True)
@@ -101,18 +101,18 @@ def test_numpy_vector_equality_others():
 
 
 def test_pandas_vector_equality():
-    """Test cases for lusmu.vector.VectorEq._value_eq() with pandas Series"""
+    """Test cases for lusmu.vector.VectorEq._data_eq() with pandas Series"""
 
     @parameterize
-    def check(value, index, other_value, other_index, expected):
-        """Series node value {0}/{1} == {2}/{3}: {4}"""
+    def check(data, index, other_data, other_index, expected):
+        """Series node data {0}/{1} == {2}/{3}: {4}"""
         # pylint: disable=W0212
         #         Access to a protected member of a client class
-        this = pd.Series(value, index=pd.to_datetime(index))
-        other = pd.Series(other_value, index=pd.to_datetime(other_index))
+        this = pd.Series(data, index=pd.to_datetime(index))
+        other = pd.Series(other_data, index=pd.to_datetime(other_index))
         vector = VectorEq(this)
 
-        assert expected == vector._value_eq(other)
+        assert expected == vector._data_eq(other)
 
     yield check([], [], [], [], True)
     yield check([1], ['2013-10-15'], [], [], False)
@@ -142,18 +142,18 @@ def test_pandas_vector_equality():
 
 
 def test_mixed_vector_equality():
-    """Test cases for lusmu.vector.VectorEq._value_eq() with pandas Series"""
+    """Test cases for lusmu.vector.VectorEq._data_eq() with pandas Series"""
 
     @parameterize
-    def check(value, index, other_value, expected):
-        """Series node value {0}/{1} == {2}: {3}"""
+    def check(data, index, other_data, expected):
+        """Series node data {0}/{1} == {2}: {3}"""
         # pylint: disable=W0212
         #         Access to a protected member of a client class
-        this = pd.Series(value, index=pd.to_datetime(index))
-        other = np.array(other_value)
+        this = pd.Series(data, index=pd.to_datetime(index))
+        other = np.array(other_data)
         vector = VectorEq(this)
 
-        assert expected == vector._value_eq(other)
+        assert expected == vector._data_eq(other)
 
     yield check([], [], [], False)
     yield check([1], ['2013-10-15'], [], False)
@@ -163,35 +163,35 @@ def test_mixed_vector_equality():
     yield check([4, 5], ['2013-10-15', '2013-10-16'], [4], False)
 
 
-class SrcNodeSetValueTestCase(TestCase):
-    def test_no_value(self):
+class SrcNodeSetDataTestCase(TestCase):
+    def test_no_data(self):
         source_node = vector.SrcNode()
 
         eq_(None, source_node.last_timestamp)
 
-    def test_dirty_value(self):
-        source_node = vector.SrcNode(value=DIRTY)
+    def test_dirty_data(self):
+        source_node = vector.SrcNode(data=DIRTY)
 
         eq_(None, source_node.last_timestamp)
 
-    def test_initial_value(self):
-        source_node = vector.SrcNode(value=pd.Series([1, 2], [1001, 1002]))
+    def test_initial_data(self):
+        source_node = vector.SrcNode(data=pd.Series([1, 2], [1001, 1002]))
 
         eq_(1002, source_node.last_timestamp)
 
-    def test_set_value(self):
+    def test_set_data(self):
         source_node = vector.SrcNode()
-        source_node.value = pd.Series([1, 2], index=[1001, 1002])
+        source_node.data = pd.Series([1, 2], index=[1001, 1002])
 
         eq_(1002, source_node.last_timestamp)
 
-    def test_scalar_value(self):
-        source_node = vector.SrcNode(value=100000.0)
+    def test_scalar_data(self):
+        source_node = vector.SrcNode(data=100000.0)
 
         eq_(None, source_node.last_timestamp)
 
-    def test_array_value(self):
-        source_node = vector.SrcNode(value=np.array([1, 2]))
+    def test_array_data(self):
+        source_node = vector.SrcNode(data=np.array([1, 2]))
 
         eq_(None, source_node.last_timestamp)
 
@@ -224,15 +224,15 @@ def test_pickling():
             else:
                 assert expected == value
 
-    # arguments: (node class, attribute, value to set,
-    #             expected value/exception/test)
+    # arguments: (node class, attribute, data to set,
+    #             expected data/exception/test)
     yield check(vector.SrcNode, 'name', 'constant',
                 'constant')
-    yield check(vector.SrcNode, '_value', 42.0,
+    yield check(vector.SrcNode, '_data', 42.0,
                 42.0)
-    yield check(vector.SrcNode, '_value', DIRTY,
+    yield check(vector.SrcNode, '_data', DIRTY,
                 DIRTY)
-    yield check(vector.SrcNode, '_value', np.array([42.0]),
+    yield check(vector.SrcNode, '_data', np.array([42.0]),
                 np.array([42.0]))
     yield check(vector.SrcNode, 'last_timestamp', 1234,
                 1234)
@@ -241,9 +241,9 @@ def test_pickling():
 
     yield check(vector.OpNode, 'name', 'constant',
                 'constant')
-    yield check(vector.OpNode, '_value', 42.0,
+    yield check(vector.OpNode, '_data', 42.0,
                 42.0)
-    yield check(vector.OpNode, '_value', np.array([42.0]),
+    yield check(vector.OpNode, '_data', np.array([42.0]),
                 np.array([42.0]))
     yield check(vector.OpNode, '_operation', sum,
                 lambda _operation: _operation == sum)
@@ -269,14 +269,14 @@ def test_input_equality():
         result = a == b
         eq_(expected, result)
 
-    yield check('unnamed (auto-named) dirty value inputs',
-                SrcNode(name=None, value=DIRTY), SrcNode(name=None, value=DIRTY),
+    yield check('unnamed (auto-named) dirty data inputs',
+                SrcNode(name=None, data=DIRTY), SrcNode(name=None, data=DIRTY),
                 False)
     yield check('non-matching names',
-                SrcNode(name='a', value=DIRTY), SrcNode(name='b', value=DIRTY),
+                SrcNode(name='a', data=DIRTY), SrcNode(name='b', data=DIRTY),
                 False)
     yield check('named vs. unnamed node',
-                SrcNode(name='a', value=DIRTY), SrcNode(name=None, value=DIRTY),
+                SrcNode(name='a', data=DIRTY), SrcNode(name=None, data=DIRTY),
                 False)
 
 
@@ -287,46 +287,46 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
     def test_disabled_and_no_output_type(self):
         node = vector.OpNode(op=NoOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
-        self.source_node.value = np.array(['42'])
+        self.source_node.data = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
         node = vector.OpNode(op=NoneOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
-        self.source_node.value = np.array(['42'])
+        self.source_node.data = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
         node = vector.OpNode(op=IntOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
-        self.source_node.value = np.array([42])
+        self.source_node.data = np.array([42])
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
         node = vector.OpNode(op=IntOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
-        self.source_node.value = np.array(['42'])
+        self.source_node.data = np.array(['42'])
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=NoOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.source_node))
-            self.source_node.value = np.array(['42'])
+            self.source_node.data = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=NoneOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.source_node))
-            self.source_node.value = np.array(['42'])
+            self.source_node.data = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=IntOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.source_node))
-            self.source_node.value = np.array([42])
+            self.source_node.data = np.array([42])
             node._evaluate()
 
     def test_enabled_and_wrong_output_type(self):
@@ -335,13 +335,13 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
                 node = vector.OpNode(name='node',
                                      op=IntOutputTypeOperation(),
                                      inputs=vector.OpNode.inputs(self.source_node))
-                self.source_node.value = np.array(['42'])
+                self.source_node.data = np.array(['42'])
                 node._evaluate()
             # The name of the NumPy string type is 'string_' in Python 2 but
             # 'str_' in Python 3.
-            str_type_name = self.source_node.value.dtype.type.__name__
-            expected = ("The output value type '{str}' for [node]\n"
-                        "doesn't match the expected type ['int', "
-                        '\'integer\'] for operation "int_operation".'
+            str_type_name = self.source_node.data.dtype.type.__name__
+            expected = ("The output data type '{str}' for [node]\n"
+                        "doesn't match the expected type ['int', 'integer'] "
+                        'for operation "int_operation".'
                         .format(str=str_type_name))
             self.assertEqual(expected, str(exc.exception))

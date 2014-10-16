@@ -68,12 +68,12 @@ alert = OpNode(
 def onclick(event):
     update_source_nodes([(mousex, event.x),
                          (mousey, event.y)])
-    print 'distance.value == {:.1f}'.format(distance.value)
-    print 'is_close.value == {!r}'.format(is_close.value)
-    print 'alert.value == {!r}'.format(alert.value)
+    print 'distance.data == {:.1f}'.format(distance.data)
+    print 'is_close.data == {!r}'.format(is_close.data)
+    print 'alert.data == {!r}'.format(alert.data)
     print
     colors = {'INSIDE': 'red', 'OUTSIDE': 'blue'}
-    draw_circle(colors[alert.value])
+    draw_circle(colors[alert.data])
 
 
 def draw_circle(color):

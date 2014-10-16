@@ -14,8 +14,8 @@ Lusmu is a Python library for `reactive programming`_ (a form of
 `directed graph`_ which consists of source nodes and operation nodes.
 
 Lusmu uses the `invalidate/lazy-revalidate`_ evaluation model: reading
-the value of a node triggers its calculation operation and reads the
-values of its inputs.  Thus, only required calculations are executed.
+the data of a node triggers its calculation operation and reads
+data from its inputs.  Thus, only required calculations are executed.
 
 A minimal example
 -----------------
@@ -29,7 +29,7 @@ A minimal example
                     inputs=OpNode.inputs(root))
 
     update_source_nodes([(root, 5)])
-    print square.value
+    print square.data
 
 The output::
 

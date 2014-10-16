@@ -55,9 +55,9 @@ while True:
     value_a, value_b = answer.split()
     update_source_nodes([(a, float(value_a)),
                          (b, float(value_b))])
-    print 'Length of hypothenuse: {:.2f}'.format(hypothenuse.value)
-    print 'Angle alpha: {:.2f} degrees'.format(math.degrees(alpha.value))
-    print 'Angle beta: {:.2f} degrees'.format(math.degrees(beta.value))
+    print 'Length of hypothenuse: {:.2f}'.format(hypothenuse.data)
+    print 'Angle alpha: {:.2f} degrees'.format(math.degrees(alpha.data))
+    print 'Angle beta: {:.2f} degrees'.format(math.degrees(beta.data))
 
 
 try:

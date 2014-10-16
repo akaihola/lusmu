@@ -42,7 +42,7 @@ class OpNodeTestCase(TestCase):
     def test_missing_evaluate(self):
         """The OpNode class must be subclassed, it doesn't work by itself"""
         with self.assertRaises(NotImplementedError):
-            IncompleteNode('name').get_value()
+            IncompleteNode('name').get_data()
 
     def test_name(self):
         """A node uses its name in its string representation"""
@@ -106,23 +106,23 @@ class OpNodeTestCase(TestCase):
         self.assertEqual({leaf}, root2._dependents)
         self.assertEqual({leaf}, root3._dependents)
 
-    def test_initial_value(self):
-        """The initial value of a source node can be set in the constructor"""
-        node = SrcNode(value=5)
-        self.assertEqual(5, node._value)
+    def test_initial_data(self):
+        """Initial data of a source node can be set in the constructor"""
+        node = SrcNode(data=5)
+        self.assertEqual(5, node._data)
 
-    def test_value_property_setter(self):
-        """The value of a node can be set with the .value property"""
+    def test_data_property_setter(self):
+        """Data for a node can be set with the .data property"""
         root = SrcNode()
-        leaf = OpNode(op=lambda value: value, inputs=OpNode.inputs(root))
-        root.value = 5
-        self.assertEqual(5, leaf.get_value())
+        leaf = OpNode(op=lambda data: data, inputs=OpNode.inputs(root))
+        root.data = 5
+        self.assertEqual(5, leaf.get_data())
 
-    def test_value_property_getter(self):
-        """The value of a node can be set with the .value property"""
-        root = SrcNode(value=5)
-        leaf = OpNode(op=lambda value: value, inputs=OpNode.inputs(root))
-        self.assertEqual(5, leaf.value)
+    def test_data_property_getter(self):
+        """Data of a node can be set with the .data property"""
+        root = SrcNode(data=5)
+        leaf = OpNode(op=lambda data: data, inputs=OpNode.inputs(root))
+        self.assertEqual(5, leaf.data)
 
 
 class BaseNodeGarbageCollectionTestCase(TestCase):
@@ -135,7 +135,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
     def test_garbage_collection(self):
         """Interconnected nodes are garbage collected"""
         source_node = SrcNode()
-        operation_node = OpNode(op=lambda value: value,
+        operation_node = OpNode(op=lambda data: data,
                                 inputs=OpNode.inputs(source_node))
         self.assertEqual(set([operation_node]), source_node._dependents)
         self.assertEqual((source_node,), operation_node._positional_inputs)
@@ -151,7 +151,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
         """Interconnected nodes which out of scope are garbage collected"""
         def inner():
             source_node = SrcNode()
-            operation_node = OpNode(op=lambda value: value,
+            operation_node = OpNode(op=lambda data: data,
                                     inputs=OpNode.inputs(source_node))
             self.assertEqual(set([operation_node]), source_node._dependents)
             self.assertEqual((source_node,), operation_node._positional_inputs)
@@ -162,19 +162,19 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
         self.assertEqual(None, input_ref())
         self.assertEqual(None, output_ref())
 
-    def test_garbage_collection_with_finalizer_values(self):
-        """Interconnected nodes with gc-unfriendly values are gc'd"""
+    def test_garbage_collection_with_finalizer_data(self):
+        """Interconnected nodes with gc-unfriendly data are gc'd"""
         class Val(object):
             def __del__(self):
                 pass
 
         val = Val()
-        source_node = SrcNode(value=val)
-        operation_node = OpNode(op=lambda value: value,
+        source_node = SrcNode(data=val)
+        operation_node = OpNode(op=lambda data: data,
                                 inputs=OpNode.inputs(source_node))
         self.assertEqual(set([operation_node]), source_node._dependents)
         self.assertEqual((source_node,), operation_node._positional_inputs)
-        self.assertEqual(val, source_node._value)
+        self.assertEqual(val, source_node._data)
         source_ref = weakref.ref(source_node)
         operation_ref = weakref.ref(operation_node)
         del source_node
@@ -196,27 +196,27 @@ class NodeDependentTestCase(TestCase):
 
     def test_keep_dirty(self):
         """Setting a dirty node as dirty doesn't trigger dependents"""
-        triggered_nodes = self.root.set_value(DIRTY)
+        triggered_nodes = self.root.set_data(DIRTY)
         self.assertEqual(set(), triggered_nodes)
 
-    def test_set_value_triggers_dependents(self):
-        """Setting a value to a dirty node triggers dependents"""
-        triggered_nodes = self.root.set_value(0)
+    def test_set_data_triggers_dependents(self):
+        """Setting data for a dirty node triggers dependents"""
+        triggered_nodes = self.root.set_data(0)
         self.assertEqual({self.triggered}, triggered_nodes)
 
-    def test_set_value_triggers_dependents(self):
-        """Re-assigning SrcNode's current value doesn't trigger dependents"""
-        self.root.set_value(0)
-        triggered_nodes = self.root.set_value(0)
+    def test_set_data_triggers_dependents(self):
+        """Re-assigning SrcNode's current data doesn't trigger dependents"""
+        self.root.set_data(0)
+        triggered_nodes = self.root.set_data(0)
         self.assertEqual(set(), triggered_nodes)
 
     def test_get_triggered_dependents(self):
-        """Setting a value to a dirty node triggers dependents"""
+        """Setting data for a dirty node triggers dependents"""
         triggered_nodes = self.root._get_triggered_dependents()
         self.assertEqual({self.triggered}, triggered_nodes)
 
     def test_get_deep_triggered_dependents(self):
-        """Setting a value to a dirty node triggers dependents tree"""
+        """Setting data for a dirty node triggers dependents tree"""
         child1 = ConstantNode('child1', triggered=True)
         child2 = ConstantNode('child2', triggered=True)
         self.triggered._connect(child1)
@@ -286,14 +286,14 @@ class TriggeredCacheTestCase(TestCase):
         self.assertEqual(1, self.leaf2.call_count)
 
 
-class NodeSetValueTestCase(TestCase):
-    """Test case for SrcNode.set_value()"""
+class NodeSetDataTestCase(TestCase):
+    """Test case for SrcNode.set_data()"""
 
-    def test_set_value(self):
-        """A value set to a dirty node is stored in the object"""
+    def test_set_data(self):
+        """Data set for a dirty node is stored in the object"""
         node = SrcNode('name')
-        node.set_value(0)
-        self.assertEqual(0, node._value)
+        node.set_data(0)
+        self.assertEqual(0, node._data)
 
 
 class UpdateNodesTestCase(TestCase):
@@ -336,35 +336,35 @@ class HomeAutomationTestCase(TestCase):
             op=lambda *args: sum(args),
             inputs=OpNode.inputs(brightness_1, brightness_2))
 
-        def inverse(value):
-            """Return the inverse of a value in the range 0..510"""
-            return 510 - value
+        def inverse(data):
+            """Return the inverse of values in the range 0..510"""
+            return 510 - data
 
         brightness_inverse = OpNode(op=inverse,
                                     inputs=OpNode.inputs(brightness_sum))
 
         lamp_power_changes = []
 
-        def set_lamp_power(value):
+        def set_lamp_power(data):
             """Log changes to lamp power"""
-            lamp_power_changes.append(value)
+            lamp_power_changes.append(data)
 
         _lamp_power = OpNode(op=set_lamp_power,
                              inputs=OpNode.inputs(brightness_inverse),
                              triggered=True)
 
         update_source_nodes_get_triggered([(brightness_1, 20),
-                                    (brightness_2, 40)])
+                                           (brightness_2, 40)])
 
         self.assertEqual([450], lamp_power_changes)
 
         update_source_nodes_get_triggered([(brightness_1, 20),
-                                    (brightness_2, 40)])
+                                           (brightness_2, 40)])
 
         self.assertEqual([450], lamp_power_changes)
 
         update_source_nodes_get_triggered([(brightness_1, 24),
-                                    (brightness_2, 40)])
+                                           (brightness_2, 40)])
 
         self.assertEqual([450, 446], lamp_power_changes)
 
@@ -396,46 +396,46 @@ class NodeVerifyOutputTypeTestCase(TestCase):
     def test_disabled_and_no_output_type(self):
         node = OpNode(op=NoOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
-        self.source_node.value = '42'
+        self.source_node.data = '42'
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
         node = OpNode(op=NoneOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
-        self.source_node.value = '42'
+        self.source_node.data = '42'
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
         node = OpNode(op=IntOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
-        self.source_node.value = 42
+        self.source_node.data = 42
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
         node = OpNode(op=IntOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
-        self.source_node.value = '42'
+        self.source_node.data = '42'
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=NoOutputTypeOperation(),
                           inputs=OpNode.inputs(self.source_node))
-            self.source_node.value = '42'
+            self.source_node.data = '42'
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=NoneOutputTypeOperation(),
                           inputs=OpNode.inputs(self.source_node))
-            self.source_node.value = '42'
+            self.source_node.data = '42'
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=IntOutputTypeOperation(),
                           inputs=OpNode.inputs(self.source_node))
-            self.source_node.value = 42
+            self.source_node.data = 42
             node._evaluate()
 
     def test_enabled_and_wrong_output_type(self):
@@ -444,9 +444,9 @@ class NodeVerifyOutputTypeTestCase(TestCase):
                 node = OpNode(name='node',
                               op=IntOutputTypeOperation(),
                               inputs=OpNode.inputs(self.source_node))
-                self.source_node.value = '42'
+                self.source_node.data = '42'
                 node._evaluate()
             self.assertEqual(
-                "The output value type 'str' for [node]\n"
+                "The output data type 'str' for [node]\n"
                 "doesn't match the expected type ['int', 'integer'] "
                 'for operation "int_operation".', str(exc.exception))

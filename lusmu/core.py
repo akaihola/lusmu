@@ -74,16 +74,16 @@ class BaseNode(object):
 
     _name_counters = defaultdict(int)
 
-    def __init__(self, name=None, value=DIRTY):
+    def __init__(self, name=None, data=DIRTY):
         self.name = name or self._generate_name()
-        self._value = value
+        self._data = data
         self._dependents = set()
 
     def _connect(self, dependent):
         """Set the given node as a dependent of this OpNode or SrcNode
 
         Immediately paints the new dependent node dirty if this node has
-        already been evaluated or if a value has already been set for this
+        already been evaluated or if data has already been set for this
         source node.
 
         Connecting nodes always invalidates the triggered nodes cache.
@@ -91,15 +91,15 @@ class BaseNode(object):
         """
         if dependent not in self._dependents:
             self._dependents.add(dependent)
-            if self._value is not DIRTY:
-                dependent._set_value(DIRTY, get_triggered=False)
+            if self._data is not DIRTY:
+                dependent._set_data(DIRTY, get_triggered=False)
             _TRIGGERED_CACHE.clear()
 
     def _disconnect(self, dependent):
         """Remove given node from the set of dependents of this OpNode or SrcNode
 
         Immediately paints the new dependent node dirty if this node has
-        previously been evaluated or if a value has previously been set for
+        previously been evaluated or if data has previously been set for
         this source node.
 
         Disconnecting nodes always invalidates the triggered nodes cache.
@@ -107,47 +107,47 @@ class BaseNode(object):
         """
         if dependent in self._dependents:
             self._dependents.remove(dependent)
-            if self._value is not DIRTY:
-                dependent._set_value(DIRTY, get_triggered=False)
+            if self._data is not DIRTY:
+                dependent._set_data(DIRTY, get_triggered=False)
             _TRIGGERED_CACHE.clear()
 
-    def _set_value(self, value, get_triggered=True):
-        """Set a new value for this OpNode or SrcNode
+    def _set_data(self, data, get_triggered=True):
+        """Set new data for this OpNode or SrcNode
 
-        If this caused the value to change, paints dependent nodes dirty and
-        returns the set of those dependent nodes which are marked "triggered"
-        and should be re-evaluated.
+        If this caused the value of the data to change, paints dependent nodes
+        dirty and returns the set of those dependent nodes which are marked
+        "triggered" and should be re-evaluated.
 
-        When called by ``set_value`` from external code, the ``get_triggered``
+        When called by ``set_data`` from external code, the ``get_triggered``
         argument must be ``True`` so the return value is cached.  Internal
         calls set ``get_triggered=False`` so memory isn't wasted for caching
         the triggered dependents of intermediate nodes.
 
-        This private method can be used as a debugging tool to set values of
+        This private method can be used as a debugging tool to set data of
         operation nodes.
 
         """
-        # test if neither, one of or both the old and the new value are DIRTY
-        dirty_count = len([v for v in (value, self._value) if v is DIRTY])
+        # test if values of neither, one of or both old and new data are DIRTY
+        dirty_count = len([v for v in (data, self._data) if v is DIRTY])
         if dirty_count == 2:
             # both DIRTY, no need to touch anything
             return set()
-        if dirty_count == 0 and self._value_eq(value):
+        if dirty_count == 0 and self._data_eq(data):
             # both non-DIRTY but equal, no need to touch anything
             return set()
-        # either one is DIRTY, or values aren't equal, update the value and
+        # either one is DIRTY, or data values aren't equal, update the data and
         # paint the dependent nodes dirty
-        self._value = value
+        self._data = data
         self._set_dependents_dirty()
         if get_triggered:
             return self._get_triggered_dependents()
 
-    def _value_eq(self, other_value):
-        return self._value == other_value
+    def _data_eq(self, other_data):
+        return self._data == other_data
 
-    def get_value(self):
-        """Return the value of the object"""
-        raise NotImplementedError('The get_value() method must be defined '
+    def get_data(self):
+        """Return the data of the object"""
+        raise NotImplementedError('The get_data() method must be defined '
                                   'for subclasses of BaseNode')
 
     def _get_triggered_dependents(self, make_cache=True):
@@ -181,7 +181,7 @@ class BaseNode(object):
 
         """
         for dependent in self._dependents:
-            dependent._set_value(DIRTY, get_triggered=False)
+            dependent._set_data(DIRTY, get_triggered=False)
 
     def _generate_name(self):
         """Generate a unique name for this OpNode or SrcNode object
@@ -199,10 +199,10 @@ class BaseNode(object):
                                counter=counters[self.__class__])
 
     def __unicode__(self):
-        return unicode(self.get_value())
+        return unicode(self.get_data())
 
     def __repr__(self):
-        return ('<{self.__class__.__name__} {self.name}: {self._value}>'
+        return ('<{self.__class__.__name__} {self.name}: {self._data}>'
                 .format(self=self))
 
 
@@ -217,32 +217,32 @@ class SrcNode(BaseNode):
             ``__repr__`` of the object. If omitted, a name is
             automatically generated.
 
-    value (optional):
-            The initial value for the source node.
+    data (optional):
+            Initial data for the source node.
 
     Examples of source nodes::
 
-        >>> source_1 = SrcNode()  # no name, no default value
-        >>> source_2 = SrcNode(value=10.0)  # with a default value
+        >>> source_1 = SrcNode()  # no name, no default data
+        >>> source_2 = SrcNode(data=10.0)  # with default data
         >>> exponent = SrcNode(name='exponent')  # named source node
-        >>> sensor = SrcNode(name='sensor', value=-5.3)  # named, with default
+        >>> sensor = SrcNode(name='sensor', data=-5.3)  # named, with default
 
     """
-    def get_value(self):
-        """Return the value of the source node"""
-        return self._value
+    def get_data(self):
+        """Return the value of the data for the source node"""
+        return self._data
 
-    def set_value(self, new_value):
-        """Set a new value for an source node
+    def set_data(self, new_data):
+        """Set new data for a source node
 
-        If this caused the value to change, paints dependent nodes dirty and
-        returns the set of those dependent nodes which are marked "triggered"
-        and should be re-evaluated.
+        If this caused the data value to change, paints dependent nodes dirty
+        and returns the set of those dependent nodes which are marked
+        "triggered" and should be re-evaluated.
 
         """
-        return self._set_value(new_value, get_triggered=True)
+        return self._set_data(new_data, get_triggered=True)
 
-    value = property(get_value, set_value)
+    data = property(get_data, set_data)
 
 
 @total_ordering
@@ -257,18 +257,18 @@ class OpNode(BaseNode):
             object. If omitted, a name is automatically generated.
 
     op: callable(*positional_inputs, **keyword_inputs)
-            The function for calculating the value of an operation node.
-            Values from inputs are provided in positional and keyword arguments
+            The function for calculating the result data of an operation node.
+            Data from inputs is provided in positional and keyword arguments
             as defined in the ``inputs=`` argument.
 
     inputs (optional): ((SrcNode/OpNode, ...), {key: SrcNode/OpNode, ...})
-            The nodes whose values are used as inputs for
+            The nodes whose data is used as inputs for
             the operation. This argument can be created with
             ``OpNode.inputs()`` which provides a cleaner syntax.
 
     triggered: boolean (default=False)
-            ``True`` is this OpNode shoud be automatically evaluated when any
-            OpNode or SrcNode it depends on change value
+            ``True`` is this OpNode shoud be automatically evaluated when data
+            of any OpNode or SrcNode it depends on changes
 
     Examples of operation nodes::
 
@@ -289,7 +289,7 @@ class OpNode(BaseNode):
                  inputs=((), None),
                  triggered=False):
         self._operation = op  # must be set before generating name
-        super(OpNode, self).__init__(name, value=DIRTY)
+        super(OpNode, self).__init__(name, data=DIRTY)
         self.triggered = triggered
         self._positional_inputs = ()
         self._keyword_inputs = {}
@@ -297,9 +297,9 @@ class OpNode(BaseNode):
         self._set_dependents_dirty()
 
     def _evaluate(self):
-        """Calculate the value for the OpNode
+        """Calculate the result data for the OpNode
 
-        Calls the operation of the node using values from the inputs of the
+        Calls the operation of the node using data from inputs of the
         node. Returns the result of the operation function.
 
         This function can also be overridden in subclasses if a class-based
@@ -309,18 +309,18 @@ class OpNode(BaseNode):
         if not self._operation:
             raise NotImplementedError('You must define the op= argument '
                                       'when instantiating the operation node')
-        positional_values = [i.get_value()
-                             for i in self._positional_inputs]
-        keyword_values = {name: i.get_value()
-                          for name, i in items(self._keyword_inputs)}
-        value = self._operation(*positional_values, **keyword_values)
+        positional_data = [i.get_data()
+                           for i in self._positional_inputs]
+        keyword_data = {name: i.get_data()
+                        for name, i in items(self._keyword_inputs)}
+        data = self._operation(*positional_data, **keyword_data)
         if ((VERIFY_OUTPUT_TYPES
              and getattr(self._operation, 'output_type', None) is not None)):
             # Output type checking has been enabled, and the node's operation
             # does specify the expected output type. Check that the calculated
-            # value matches that type.
-            self._verify_output_type(value)
-        return value
+            # data matches that type.
+            self._verify_output_type(data)
+        return data
 
     @staticmethod
     def inputs(*args, **kwargs):
@@ -341,8 +341,8 @@ class OpNode(BaseNode):
         """
         return args, kwargs
 
-    def _verify_output_type(self, value):
-        """Assert that the given value matches the operation's output type
+    def _verify_output_type(self, data):
+        """Assert that the given data matches the operation's output type
 
         This check should be run only in development if the developer wants to
         ensure the consistency of a graph's types.
@@ -352,25 +352,25 @@ class OpNode(BaseNode):
 
         Arguments
         ---------
-        value: The value whose type is to be checked
+        data: The data whose type is to be checked
 
         Raises
         ------
-        TypeError: The value doesn't match the desired output type of the
+        TypeError: The data doesn't match the desired output type of the
                    node's operation
 
         """
-        if not isinstance(value, self._operation.output_type):
+        if not isinstance(data, self._operation.output_type):
             output_type = self._operation.output_type
             output_type_name = ([v.__name__ for v in output_type]
                                 if isinstance(output_type, tuple)
                                 else output_type.__name__)
             raise TypeError(
-                "The output value type {value.__class__.__name__!r} "
+                "The output data type {data.__class__.__name__!r} "
                 "for [{self.name}]\n"
                 "doesn't match the expected type {output_type} for operation "
                 '"{self._operation.name}".'
-                .format(value=value, output_type=output_type_name, self=self))
+                .format(data=data, output_type=output_type_name, self=self))
 
     def set_inputs(self, *args, **kwargs):
         """Replace current positional and keyword inputs"""
@@ -381,25 +381,25 @@ class OpNode(BaseNode):
         for inp in self._iterate_inputs():
             inp._connect(self)
 
-    def get_value(self):
-        """Return OpNode value, evaluate if needed and mark dependents dirty"""
-        if self._value is DIRTY:
-            self._value = self._evaluate()
-            LOG.debug('EVALUATED %s: %s', self.name, self._value)
+    def get_data(self):
+        """Return OpNode data, evaluate if needed and mark dependents dirty"""
+        if self._data is DIRTY:
+            self._data = self._evaluate()
+            LOG.debug('EVALUATED %s: %s', self.name, self._data)
             self._set_dependents_dirty()
-        return self._value
+        return self._data
 
-    def set_value(self, new_value):
-        """Set a new value for an operation node
+    def set_data(self, new_data):
+        """Set new data for an operation node
 
-        If this caused the value to change, paints dependent nodes dirty and
-        returns the set of those dependent nodes which are marked "triggered"
-        and should be re-evaluated.
+        If this caused the data value to change, paints dependent nodes dirty
+        and returns the set of those dependent nodes which are marked
+        "triggered" and should be re-evaluated.
 
         """
-        return self._set_value(new_value, get_triggered=True)
+        return self._set_data(new_data, get_triggered=True)
 
-    value = property(get_value, set_value)
+    data = property(get_data, set_data)
 
     def _iterate_inputs(self):
         """Iterate through positional and keyword inputs"""
@@ -432,37 +432,37 @@ class OpNode(BaseNode):
         return self.name < other.name
 
 
-def update_source_nodes_iter(nodes_and_values):
-    """Update values of multiple source nodes and trigger dependent nodes
+def update_source_nodes_iter(nodes_and_data):
+    """Update data of multiple source nodes and trigger dependent nodes
 
     This is a generator which iterates through the set of triggered dependent
     nodes.
 
     """
     triggered = set()
-    for node, new_value in nodes_and_values:
-        triggered |= node._set_value(new_value)
+    for node, new_data in nodes_and_data:
+        triggered |= node._set_data(new_data)
     for node in triggered:
-        node.get_value()  # trigger evaluation
+        node.get_data()  # trigger evaluation
         yield node
 
 
-def update_source_nodes(nodes_and_values):
-    """Update values of multiple source nodes and trigger dependent nodes
+def update_source_nodes(nodes_and_data):
+    """Update data of multiple source nodes and trigger dependent nodes
 
     Use this variant of the ``update_source_nodes*`` functions if you don't
     need to access the set of triggered dependent nodes.
 
     """
-    for _node in update_source_nodes_iter(nodes_and_values):
+    for _node in update_source_nodes_iter(nodes_and_data):
         pass
 
 
-def update_source_nodes_get_triggered(nodes_and_values):
-    """Update values of multiple source nodes and trigger dependent nodes
+def update_source_nodes_get_triggered(nodes_and_data):
+    """Update data of multiple source nodes and trigger dependent nodes
 
     This variant of the ``update_source_nodes*`` functions returns triggered
     dependent nodes as a Python set.
 
     """
-    return set(update_source_nodes_iter(nodes_and_values))
+    return set(update_source_nodes_iter(nodes_and_data))
