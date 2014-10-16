@@ -256,15 +256,15 @@ class OpNode(BaseNode):
             The internal name of the node. Used in the ``__repr__`` of the
             object. If omitted, a name is automatically generated.
 
-    action: callable(*positional_inputs, **keyword_inputs)
+    op: callable(*positional_inputs, **keyword_inputs)
             The function for calculating the value of an operation node.
             Values from inputs are provided in positional and keyword arguments
             as defined in the ``inputs=`` argument.
 
     inputs (optional): ((Input/OpNode, ...), {key: Input/OpNode, ...})
             The OpNodes and Inputs whose values are used as inputs for the
-            action.  This argument can be created with ``OpNode.inputs()`` which
-            provides a cleaner syntax.
+            operation.  This argument can be created with ``OpNode.inputs()``
+            which provides a cleaner syntax.
 
     triggered: boolean (default=False)
             ``True`` is this OpNode shoud be automatically evaluated when any
@@ -274,21 +274,21 @@ class OpNode(BaseNode):
 
         >>> input_1, input_2, exponent = [Input() for i in range(3)]
         >>> # sum OpNode with two positional inputs
-        >>> sum_node = OpNode(action=lambda *args: sum(args),
+        >>> sum_node = OpNode(op=lambda *args: sum(args),
         ...                   inputs=OpNode.inputs(input_1, input_2))
         >>> # triggered (auto-calculated) OpNode with two keyword inputs
         >>> triggered_node = OpNode(
-        ...     action=lambda a, x: a ** x,
+        ...     op=lambda a, x: a ** x,
         ...     inputs=OpNode.inputs(a=input_1, x=exponent),
         ...     triggered=True)
 
     """
     def __init__(self,
                  name=None,
-                 action=None,
+                 op=None,
                  inputs=((), None),
                  triggered=False):
-        self._action = action  # must be set before generating name
+        self._operation = op  # must be set before generating name
         super(OpNode, self).__init__(name, value=DIRTY)
         self.triggered = triggered
         self._positional_inputs = ()
@@ -299,24 +299,24 @@ class OpNode(BaseNode):
     def _evaluate(self):
         """Calculate the value for the OpNode
 
-        Calls the action of the node using values from the inputs of the
+        Calls the operation of the node using values from the inputs of the
         node. Returns the result of the operation function.
 
         This function can also be overridden in subclasses if a class-based
-        approach to defining actions is preferred.
+        approach to defining operations is preferred.
 
         """
-        if not self._action:
-            raise NotImplementedError('You must define the action= argument '
+        if not self._operation:
+            raise NotImplementedError('You must define the op= argument '
                                       'when instantiating the operation node')
         positional_values = [i.get_value()
                              for i in self._positional_inputs]
         keyword_values = {name: i.get_value()
                           for name, i in items(self._keyword_inputs)}
-        value = self._action(*positional_values, **keyword_values)
+        value = self._operation(*positional_values, **keyword_values)
         if ((VERIFY_OUTPUT_TYPES
-             and getattr(self._action, 'output_type', None) is not None)):
-            # Output type checking has been enabled, and the node's action
+             and getattr(self._operation, 'output_type', None) is not None)):
+            # Output type checking has been enabled, and the node's operation
             # does specify the expected output type. Check that the calculated
             # value matches that type.
             self._verify_output_type(value)
@@ -342,12 +342,12 @@ class OpNode(BaseNode):
         return args, kwargs
 
     def _verify_output_type(self, value):
-        """Assert that the given value matches the action's output type
+        """Assert that the given value matches the operation's output type
 
         This check should be run only in development if the developer wants to
         ensure the consistency of a graph's types.
 
-        This method may only be called if the node's action has a non-None
+        This method may only be called if the node's operation has a non-None
         ``output_type`` attribute.
 
         Arguments
@@ -357,19 +357,19 @@ class OpNode(BaseNode):
         Raises
         ------
         TypeError: The value doesn't match the desired output type of the
-                   node's action
+                   node's operation
 
         """
-        if not isinstance(value, self._action.output_type):
-            output_type = self._action.output_type
+        if not isinstance(value, self._operation.output_type):
+            output_type = self._operation.output_type
             output_type_name = ([v.__name__ for v in output_type]
                                 if isinstance(output_type, tuple)
                                 else output_type.__name__)
             raise TypeError(
                 "The output value type {value.__class__.__name__!r} "
                 "for [{self.name}]\n"
-                "doesn't match the expected type {output_type} for action "
-                '"{self._action.name}".'
+                "doesn't match the expected type {output_type} for operation "
+                '"{self._operation.name}".'
                 .format(value=value, output_type=output_type_name, self=self))
 
     def set_inputs(self, *args, **kwargs):
@@ -412,20 +412,21 @@ class OpNode(BaseNode):
         The name includes:
 
         * the name of the node class
-        * the function name of the ``_action`` if it's defined
+        * the function name of the ``_operation`` if it's defined
           and isn't a lambda
         * an auto-incremented number
 
         """
-        action_name = get_func_name(self._action, '<lambda>')
-        if action_name == '<lambda>':
+        operation_name = get_func_name(self._operation, '<lambda>')
+        if operation_name == '<lambda>':
             return super(OpNode, self)._generate_name()
         counters = self._name_counters
-        counters[self.__class__, action_name] += 1
-        template = '{class_name}-{action_name}-{counter}'
-        return template.format(class_name=self.__class__.__name__,
-                               action_name=action_name,
-                               counter=counters[self.__class__, action_name])
+        counters[self.__class__, operation_name] += 1
+        template = '{class_name}-{operation_name}-{counter}'
+        return template.format(
+            class_name=self.__class__.__name__,
+            operation_name=operation_name,
+            counter=counters[self.__class__, operation_name])
 
     def __lt__(self, other):
         return self.name < other.name

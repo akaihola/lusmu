@@ -56,16 +56,16 @@ class OpNodeTestCase(TestCase):
 
         self.assertEqual('AutoNamedInput-1', AutoNamedInput().name)
 
-    def test_default_name_with_action(self):
-        """The default name of a node includes action func_name if available"""
+    def test_default_name_with_operation(self):
+        """The default name of a node includes operation func_name if available"""
         class NamedNode(OpNode):
-            """OpNode subclass for testing action names in automatic names"""
+            """OpNode subclass for testing operation names in automatic names"""
 
-        def my_action(_arg):
-            """Dummy example action"""
+        def my_operation(_arg):
+            """Dummy example operation"""
 
-        node = NamedNode(action=my_action)
-        self.assertEqual('NamedNode-my_action-1', node.name)
+        node = NamedNode(op=my_operation)
+        self.assertEqual('NamedNode-my_operation-1', node.name)
 
     def test_node_classes_have_separate_counters(self):
         """All node classes have separate counters for auto-generated names"""
@@ -114,14 +114,14 @@ class OpNodeTestCase(TestCase):
     def test_value_property_setter(self):
         """The value of a node can be set with the .value property"""
         root = Input()
-        leaf = OpNode(action=lambda value: value, inputs=OpNode.inputs(root))
+        leaf = OpNode(op=lambda value: value, inputs=OpNode.inputs(root))
         root.value = 5
         self.assertEqual(5, leaf.get_value())
 
     def test_value_property_getter(self):
         """The value of a node can be set with the .value property"""
         root = Input(value=5)
-        leaf = OpNode(action=lambda value: value, inputs=OpNode.inputs(root))
+        leaf = OpNode(op=lambda value: value, inputs=OpNode.inputs(root))
         self.assertEqual(5, leaf.value)
 
 
@@ -135,7 +135,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
     def test_garbage_collection(self):
         """Interconnected nodes are garbage collected"""
         input_node = Input()
-        output_node = OpNode(action=lambda value: value,
+        output_node = OpNode(op=lambda value: value,
                              inputs=OpNode.inputs(input_node))
         self.assertEqual(set([output_node]), input_node._dependents)
         self.assertEqual((input_node,), output_node._positional_inputs)
@@ -151,7 +151,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
         """Interconnected nodes which out of scope are garbage collected"""
         def inner():
             input_node = Input()
-            output_node = OpNode(action=lambda value: value,
+            output_node = OpNode(op=lambda value: value,
                                  inputs=OpNode.inputs(input_node))
             self.assertEqual(set([output_node]), input_node._dependents)
             self.assertEqual((input_node,), output_node._positional_inputs)
@@ -170,7 +170,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
 
         val = Val()
         input_node = Input(value=val)
-        output_node = OpNode(action=lambda value: value,
+        output_node = OpNode(op=lambda value: value,
                               inputs=OpNode.inputs(input_node))
         self.assertEqual(set([output_node]), input_node._dependents)
         self.assertEqual((input_node,), output_node._positional_inputs)
@@ -332,14 +332,14 @@ class HomeAutomationTestCase(TestCase):
         """A simple example in the home automation domain"""
         brightness_1 = Input()
         brightness_2 = Input()
-        brightness_sum = OpNode(action=lambda *args: sum(args),
+        brightness_sum = OpNode(op=lambda *args: sum(args),
                                 inputs=OpNode.inputs(brightness_1, brightness_2))
 
         def inverse(value):
             """Return the inverse of a value in the range 0..510"""
             return 510 - value
 
-        brightness_inverse = OpNode(action=inverse,
+        brightness_inverse = OpNode(op=inverse,
                                     inputs=OpNode.inputs(brightness_sum))
 
         lamp_power_changes = []
@@ -348,7 +348,7 @@ class HomeAutomationTestCase(TestCase):
             """Log changes to lamp power"""
             lamp_power_changes.append(value)
 
-        _lamp_power = OpNode(action=set_lamp_power,
+        _lamp_power = OpNode(op=set_lamp_power,
                              inputs=OpNode.inputs(brightness_inverse),
                              triggered=True)
 
@@ -368,23 +368,23 @@ class HomeAutomationTestCase(TestCase):
         self.assertEqual([450, 446], lamp_power_changes)
 
 
-class MockActionBase(object):
+class MockOperationBase(object):
     def __call__(self, data):
         return data
 
 
-class NoOutputTypeAction(MockActionBase):
+class NoOutputTypeOperation(MockOperationBase):
     name = 'no'
     pass
 
 
-class NoneOutputTypeAction(MockActionBase):
+class NoneOutputTypeOperation(MockOperationBase):
     name = 'none'
     output_type = None
 
 
-class IntOutputTypeAction(MockActionBase):
-    name = 'int_action'
+class IntOutputTypeOperation(MockOperationBase):
+    name = 'int_operation'
     output_type = int, np.integer
 
 
@@ -393,46 +393,46 @@ class NodeVerifyOutputTypeTestCase(TestCase):
         self.input = Input()
 
     def test_disabled_and_no_output_type(self):
-        node = OpNode(action=NoOutputTypeAction(),
+        node = OpNode(op=NoOutputTypeOperation(),
                       inputs=OpNode.inputs(self.input))
         self.input.value = '42'
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
-        node = OpNode(action=NoneOutputTypeAction(),
+        node = OpNode(op=NoneOutputTypeOperation(),
                       inputs=OpNode.inputs(self.input))
         self.input.value = '42'
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
-        node = OpNode(action=IntOutputTypeAction(),
+        node = OpNode(op=IntOutputTypeOperation(),
                       inputs=OpNode.inputs(self.input))
         self.input.value = 42
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
-        node = OpNode(action=IntOutputTypeAction(),
+        node = OpNode(op=IntOutputTypeOperation(),
                       inputs=OpNode.inputs(self.input))
         self.input.value = '42'
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = OpNode(action=NoOutputTypeAction(),
+            node = OpNode(op=NoOutputTypeOperation(),
                           inputs=OpNode.inputs(self.input))
             self.input.value = '42'
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = OpNode(action=NoneOutputTypeAction(),
+            node = OpNode(op=NoneOutputTypeOperation(),
                           inputs=OpNode.inputs(self.input))
             self.input.value = '42'
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = OpNode(action=IntOutputTypeAction(),
+            node = OpNode(op=IntOutputTypeOperation(),
                           inputs=OpNode.inputs(self.input))
             self.input.value = 42
             node._evaluate()
@@ -441,11 +441,11 @@ class NodeVerifyOutputTypeTestCase(TestCase):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             with assert_raises(TypeError) as exc:
                 node = OpNode(name='node',
-                              action=IntOutputTypeAction(),
+                              op=IntOutputTypeOperation(),
                               inputs=OpNode.inputs(self.input))
                 self.input.value = '42'
                 node._evaluate()
             self.assertEqual(
                 "The output value type 'str' for [node]\n"
                 "doesn't match the expected type ['int', 'integer'] "
-                'for action "int_action".', str(exc.exception))
+                'for operation "int_operation".', str(exc.exception))

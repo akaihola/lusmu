@@ -14,9 +14,9 @@ import numpy as np
 import pandas as pd
 
 from lusmu.core import DIRTY
-from lusmu.tests.test_core import (NoOutputTypeAction,
-                                   NoneOutputTypeAction,
-                                   IntOutputTypeAction)
+from lusmu.tests.test_core import (NoOutputTypeOperation,
+                                   NoneOutputTypeOperation,
+                                   IntOutputTypeOperation)
 from lusmu.vector import Input
 from lusmu import vector
 from lusmu.tests.tools import parameterize
@@ -245,8 +245,8 @@ def test_pickling():
                 42.0)
     yield check(vector.OpNode, '_value', np.array([42.0]),
                 np.array([42.0]))
-    yield check(vector.OpNode, '_action', sum,
-                lambda _action: _action == sum)
+    yield check(vector.OpNode, '_operation', sum,
+                lambda _operation: _operation == sum)
     yield check(vector.OpNode, 'triggered', True,
                 True)
     yield check(vector.OpNode, '_positional_inputs',
@@ -285,46 +285,46 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
         self.input = Input()
 
     def test_disabled_and_no_output_type(self):
-        node = vector.OpNode(action=NoOutputTypeAction(),
+        node = vector.OpNode(op=NoOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
-        node = vector.OpNode(action=NoneOutputTypeAction(),
+        node = vector.OpNode(op=NoneOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
-        node = vector.OpNode(action=IntOutputTypeAction(),
+        node = vector.OpNode(op=IntOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array([42])
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
-        node = vector.OpNode(action=IntOutputTypeAction(),
+        node = vector.OpNode(op=IntOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array(['42'])
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = vector.OpNode(action=NoOutputTypeAction(),
+            node = vector.OpNode(op=NoOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.input))
             self.input.value = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = vector.OpNode(action=NoneOutputTypeAction(),
+            node = vector.OpNode(op=NoneOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.input))
             self.input.value = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = vector.OpNode(action=IntOutputTypeAction(),
+            node = vector.OpNode(op=IntOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.input))
             self.input.value = np.array([42])
             node._evaluate()
@@ -333,7 +333,7 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             with assert_raises(TypeError) as exc:
                 node = vector.OpNode(name='node',
-                                     action=IntOutputTypeAction(),
+                                     op=IntOutputTypeOperation(),
                                      inputs=vector.OpNode.inputs(self.input))
                 self.input.value = np.array(['42'])
                 node._evaluate()
@@ -342,6 +342,6 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
             str_type_name = self.input.value.dtype.type.__name__
             expected = ("The output value type '{str}' for [node]\n"
                         "doesn't match the expected type ['int', "
-                        '\'integer\'] for action "int_action".'
+                        '\'integer\'] for operation "int_operation".'
                         .format(str=str_type_name))
             self.assertEqual(expected, str(exc.exception))

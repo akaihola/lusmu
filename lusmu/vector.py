@@ -123,7 +123,8 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
         new_last_timestamp = self._get_max_timestamp(value)
         if new_last_timestamp:
             self.last_timestamp = new_last_timestamp
-        return super(Input, self)._set_value(value, get_triggered=get_triggered)
+        return super(Input, self)._set_value(value,
+                                             get_triggered=get_triggered)
 
     def __eq__(self, other):
         """Equality comparison provided for unit test convenience"""
@@ -137,20 +138,20 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
 class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
     """Vector compatible Lusmu operation node"""
     _state_attributes = (NodePickleMixin._state_attributes +
-                         ('_action',
+                         ('_operation',
                           'triggered',
                           '_positional_inputs',
                           '_keyword_inputs'))
 
     def _verify_output_type(self, value):
-        """Assert that the given value matches the action's output type
+        """Assert that the given value matches the operation's output type
 
         This adds NumPy/Pandas dtype support to output type verification.
 
         """
         if hasattr(value, 'dtype'):
-            if not issubclass(value.dtype.type, self._action.output_type):
-                output_type = self._action.output_type
+            if not issubclass(value.dtype.type, self._operation.output_type):
+                output_type = self._operation.output_type
                 output_type_name = ([v.__name__ for v in output_type]
                                     if isinstance(output_type, tuple)
                                     else output_type.__name__)
@@ -159,8 +160,8 @@ class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
                     "The output value type {value.dtype.type.__name__!r} "
                     "for [{self.name}]\n"
                     "doesn't match the expected type "
-                    "{output_type_name} for action "
-                    '"{self._action.name}".'
+                    "{output_type_name} for operation "
+                    '"{self._operation.name}".'
                     .format(output_type_name=output_type_name,
                             value=value,
                             self=self))

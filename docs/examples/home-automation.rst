@@ -12,10 +12,10 @@ and the Python :mod:`math` package::
     from lusmu.core import Input, OpNode, update_inputs
     import math
 
-Them define the action functions
+Them define the operation functions
 to be used in the home automation system.
 
-.. note:: Actions with positional arguments
+.. note:: Operations with positional arguments
           receive them as separate arguments, not as a list.
           This is why we need to wrap Python's :func:`sum` function.
 
@@ -50,15 +50,15 @@ and a lower limit of 20.0 degrees is used to switch the heater off:
 
     temperature_1 = Input()
     temperature_2 = Input()
-    temperature_avg = OpNode(action=avg,
+    temperature_avg = OpNode(op=avg,
                              inputs=OpNode.inputs(temperature_1, temperature_2))
-    temperature_threshold = OpNode(action=lambda temperature: temperature > 20.0,
+    temperature_threshold = OpNode(op=lambda temperature: temperature > 20.0,
                                    inputs=OpNode.inputs(temperature_avg))
 
     def switch_heater(should_be_off):
         print 'Heater {}'.format('off' if should_be_off else 'on')
 
-    heater = OpNode(action=switch_heater,
+    heater = OpNode(op=switch_heater,
                     inputs=OpNode.inputs(temperature_threshold),
                     triggered=True)
 
@@ -79,15 +79,15 @@ The lights are adjusted according to brightness sensors in the windows:
 
     brightness_1 = Input()
     brightness_2 = Input()
-    brightness_sum = OpNode(action=sum_,
+    brightness_sum = OpNode(op=sum_,
                             inputs=OpNode.inputs(brightness_1, brightness_2))
-    brightness_inverse = OpNode(action=inverse(510),
+    brightness_inverse = OpNode(op=inverse(510),
                                 inputs=OpNode.inputs(brightness_sum))
 
     def set_lamp_power(power):
         print 'Lamp power {:.2f}'.format(power)
 
-    lamp_power = OpNode(action=set_lamp_power,
+    lamp_power = OpNode(op=set_lamp_power,
                         inputs=OpNode.inputs(brightness_inverse),
                         triggered=True)
 
@@ -104,7 +104,7 @@ the relative humidity is calculated:
 ::
 
     humidity = Input()
-    humidity_normalized = OpNode(action=lambda sensor_value: 100.0 * (1.0 - math.log(sensor_value, 255)),
+    humidity_normalized = OpNode(op=lambda sensor_value: 100.0 * (1.0 - math.log(sensor_value, 255)),
                                  inputs=OpNode.inputs(humidity))
 
 Initially the value of all nodes is undefined.

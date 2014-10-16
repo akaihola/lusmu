@@ -32,31 +32,31 @@ def collect_nodes(collected_nodes, *args):
                 collect_nodes(collected_nodes, *node._iterate_inputs())
 
 
-def get_action_name(action):
-    """Try to return a good representation of the name of an action callable"""
-    if hasattr(action, 'name'):
-        return action.name
-    if hasattr(action, '__name__'):
-        return action.__name__
-    if hasattr(action, 'func_name'):
-        return action.func_name
-    return action.__class__.__name__
+def get_operation_name(operation):
+    """Try to return a good representation of the name of an operation callable"""
+    if hasattr(operation, 'name'):
+        return operation.name
+    if hasattr(operation, '__name__'):
+        return operation.__name__
+    if hasattr(operation, 'func_name'):
+        return operation.func_name
+    return operation.__class__.__name__
 
 
 def format_node_default(node_id, node):
     shape = 'oval' if isinstance(node, Input) else 'box'
-    action = ('{br}{br}<FONT COLOR="#888888">{action}</FONT>'
-              .format(br=' <BR ALIGN="LEFT"/>',
-                      action=get_action_name(node._action))
-              if isinstance(node, OpNode)
-              else '')
+    operation = ('{br}{br}<FONT COLOR="#888888">{operation}</FONT>'
+                 .format(br=' <BR ALIGN="LEFT"/>',
+                         operation=get_operation_name(node._operation))
+                 if isinstance(node, OpNode)
+                 else '')
     yield ('  {node_id} '
            '[label=<<B>{name}</B>'
-           '{action}>'
+           '{operation}>'
            ' shape={shape}];'
            .format(node_id=node_id,
                    name=node.name.replace(':', ':<BR ALIGN="LEFT"/>'),
-                   action=action,
+                   operation=operation,
                    shape=shape))
     yield '  edge [color=blue];'
 

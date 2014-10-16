@@ -52,15 +52,15 @@ mousex = Input(name='mouse x')
 mousey = Input(name='mouse y')
 distance = OpNode(
     name='distance',
-    action=get_distance,
+    op=get_distance,
     inputs=OpNode.inputs(mousex, mousey))
 is_close = OpNode(
     name='is close',
-    action=is_close_to_target,
+    op=is_close_to_target,
     inputs=OpNode.inputs(distance))
 alert = OpNode(
     name='alert',
-    action=get_distance_description,
+    op=get_distance_description,
     inputs=OpNode.inputs(is_close))
 
 

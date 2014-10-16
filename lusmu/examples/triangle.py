@@ -22,28 +22,28 @@ def sqrt(square):
 
 
 area_a = OpNode(name='square of a',
-              action=square,
+              op=square,
               inputs=OpNode.inputs(a))
 area_b = OpNode(name='square of b',
-              action=square,
+              op=square,
               inputs=OpNode.inputs(b))
 area_hypothenuse = OpNode(name='square of hypothenuse',
-                        action=sum_,
+                        op=sum_,
                         inputs=OpNode.inputs(area_a, area_b))
 hypothenuse = OpNode(name='length of hypothenuse',
-                   action=sqrt,
+                   op=sqrt,
                    inputs=OpNode.inputs(area_hypothenuse))
 sin_alpha = OpNode(name='sin of alpha',
-                 action=operator.div,
+                 op=operator.div,
                  inputs=OpNode.inputs(a, hypothenuse))
 alpha = OpNode(name='angle alpha',
-             action=math.asin,
+             op=math.asin,
              inputs=OpNode.inputs(sin_alpha))
 sin_beta = OpNode(name='sin of beta',
-                action=operator.div,
+                op=operator.div,
                 inputs=OpNode.inputs(b, hypothenuse))
 beta = OpNode(name='angle beta',
-            action=math.asin,
+            op=math.asin,
             inputs=OpNode.inputs(sin_beta))
 
 
