@@ -83,7 +83,7 @@ class BaseNode(object):
         """Set the given node as a dependent of this OpNode or SrcNode
 
         Immediately clears data from the new dependent node if this node has
-        already been evaluated or if data has already been set for this
+        already been fired or if data has already been set for this
         source node.
 
         Connecting nodes always invalidates the triggered nodes cache.
@@ -99,7 +99,7 @@ class BaseNode(object):
         """Remove given node from the set of dependents of this OpNode or SrcNode
 
         Immediately clears data from the new dependent node if this node has
-        previously been evaluated or if data has previously been set for
+        previously been fired or if data has previously been set for
         this source node.
 
         Disconnecting nodes always invalidates the triggered nodes cache.
@@ -116,7 +116,7 @@ class BaseNode(object):
 
         If this caused the value of the data to change, clears data from
         dependent nodes and returns the set of those dependent nodes which are
-        marked "triggered" and should be re-evaluated.
+        marked "triggered" and should be re-fired.
 
         When called by ``set_data`` from external code, the ``get_triggered``
         argument must be ``True`` so the return value is cached.  Internal
@@ -238,7 +238,7 @@ class SrcNode(BaseNode):
 
         If this caused the data value to change, clears data from dependent
         nodes and returns the set of those dependent nodes which are marked
-        "triggered" and should be re-evaluated.
+        "triggered" and should be re-fired.
 
         """
         return self._set_data(new_data, get_triggered=True)
@@ -285,10 +285,9 @@ class OpNode(BaseNode):
             ``OpNode.inputs()`` which provides a cleaner syntax.
 
     triggered: boolean (default=False)
-            ``True`` if the operation of the node shoud be automatically
-            evaluated when new data is received in any of its input ports. The
-            default is to only evaluate the operation when the value of the
-            output port is requested.
+            ``True`` if the node shoud be automatically fired when new data is
+            received in any of its input ports. The default is to only evaluate
+            the operation when the value of the output port is requested.
 
     Examples of operation nodes::
 
@@ -316,15 +315,14 @@ class OpNode(BaseNode):
         self.set_inputs(*inputs[0], **inputs[1] or {})
         self._clear_dependents_data()
 
-    def _evaluate(self):
+    def _fire(self):
         """Calculate the result data for the OpNode
 
         Calls the operation of the node using data from nodes connected to the
         input ports of this node. Returns the result of the operation function.
 
-        Reading data from input nodes triggers evaluation of those nodes'
-        operations if necessary. This results in the lazy evaluation mechanism
-        for the graph.
+        Reading data from input nodes fires those nodes if necessary. This
+        results in the lazy evaluation mechanism for the graph.
 
         This function can also be overridden in subclasses if a class-based
         approach to defining operations is preferred.
@@ -409,10 +407,10 @@ class OpNode(BaseNode):
             inp._connect(self)
 
     def get_data(self):
-        """Return node data, evaluate if needed, clear data in dependents"""
+        """Return node data, fire node if needed, clear data in dependents"""
         if self._data is NO_DATA:
-            self._data = self._evaluate()
-            LOG.debug('EVALUATED %s: %s', self.name, self._data)
+            self._data = self._fire()
+            LOG.debug('FIRED %s: %s', self.name, self._data)
             self._clear_dependents_data()
         return self._data
 
@@ -421,7 +419,7 @@ class OpNode(BaseNode):
 
         If this caused the data value to change, clears data from dependent
         nodes and returns the set of those dependent nodes which are marked
-        "triggered" and should be re-evaluated.
+        "triggered" and should be re-fired.
 
         """
         return self._set_data(new_data, get_triggered=True)
@@ -470,7 +468,7 @@ def update_source_nodes_iter(nodes_and_data):
     for node, new_data in nodes_and_data:
         triggered |= node._set_data(new_data)
     for node in triggered:
-        node.get_data()  # trigger evaluation
+        node.get_data()  # fire node
         yield node
 
 

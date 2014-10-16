@@ -26,20 +26,20 @@ import weakref
 
 
 class IncompleteNode(OpNode):
-    """An operation node subclass which doesn't implement ._evaluate()"""
+    """An operation node subclass which doesn't implement ._fire()"""
     pass
 
 
 class ConstantNode(OpNode):
     """An operation node subclass which always evaluates to the value 1"""
-    def _evaluate(self):
+    def _fire(self):
         return 1
 
 
 class OpNodeTestCase(TestCase):
     """Test case for basic functionality of the OpNode class"""
 
-    def test_missing_evaluate(self):
+    def test_missing_fire(self):
         """The OpNode class must be subclassed, it doesn't work by itself"""
         with self.assertRaises(NotImplementedError):
             IncompleteNode('name').get_data()
@@ -397,46 +397,46 @@ class NodeVerifyOutputTypeTestCase(TestCase):
         node = OpNode(op=NoOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
         self.source_node.data = '42'
-        node._evaluate()
+        node._fire()
 
     def test_disabled_and_none_output_type(self):
         node = OpNode(op=NoneOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
         self.source_node.data = '42'
-        node._evaluate()
+        node._fire()
 
     def test_disabled_and_correct_output_type(self):
         node = OpNode(op=IntOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
         self.source_node.data = 42
-        node._evaluate()
+        node._fire()
 
     def test_disabled_and_wrong_output_type(self):
         node = OpNode(op=IntOutputTypeOperation(),
                       inputs=OpNode.inputs(self.source_node))
         self.source_node.data = '42'
-        node._evaluate()
+        node._fire()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=NoOutputTypeOperation(),
                           inputs=OpNode.inputs(self.source_node))
             self.source_node.data = '42'
-            node._evaluate()
+            node._fire()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=NoneOutputTypeOperation(),
                           inputs=OpNode.inputs(self.source_node))
             self.source_node.data = '42'
-            node._evaluate()
+            node._fire()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=IntOutputTypeOperation(),
                           inputs=OpNode.inputs(self.source_node))
             self.source_node.data = 42
-            node._evaluate()
+            node._fire()
 
     def test_enabled_and_wrong_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
@@ -445,7 +445,7 @@ class NodeVerifyOutputTypeTestCase(TestCase):
                               op=IntOutputTypeOperation(),
                               inputs=OpNode.inputs(self.source_node))
                 self.source_node.data = '42'
-                node._evaluate()
+                node._fire()
             self.assertEqual(
                 "The output data type 'str' for [node]\n"
                 "doesn't match the expected type ['int', 'integer'] "

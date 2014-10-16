@@ -112,7 +112,7 @@ The :obj:`lusmu.core.NO_DATA` special object is used
 to denote undefined data.
 The private :attr:`~lusmu.core.OpNode._data` attribute
 can be inspected to see the cached data of the node
-without triggering lazy evaluation::
+without firing lazy evaluation::
 
     >>> temperature_avg._data
     <lusmu.core.NO_DATA>
@@ -130,7 +130,7 @@ using the :func:`~lusmu.core.update_source_nodes` function::
 
 Since the heater and lamp control nodes
 are defined as auto-calculated (``triggered=True``),
-all nodes on those dependency paths are evaluated
+all nodes on those dependency paths are fired
 when data of nodes are updated::
 
     >>> temperature_avg._data
@@ -143,14 +143,15 @@ On the other hand, the relative humidity value is not auto-calculated::
     >>> humidity_normalized._data
     <lusmu.core.NO_DATA>
 
-The dependency path from the source node to the requested humidity value
-is only evaluated when needed.
-The :attr:`lusmu.core.OpNode.data` property triggers evaluation::
+Nodes on the dependency path
+from the source node to the requested humidity value
+are only fired when needed.
+Accessing the :attr:`lusmu.core.OpNode.data` property fires evaluation::
 
     >>> humidity_normalized.data
     29.40196809721851
 
-Unchanged data doesn't trigger evaluation:
+Unchanged data doesn't fire evaluation:
 
     >>> update_source_nodes([(temperature_1, 25.0),
     ...                      (temperature_2, 22.5)})

@@ -291,46 +291,46 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
         node = vector.OpNode(op=NoOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
         self.source_node.data = np.array(['42'])
-        node._evaluate()
+        node._fire()
 
     def test_disabled_and_none_output_type(self):
         node = vector.OpNode(op=NoneOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
         self.source_node.data = np.array(['42'])
-        node._evaluate()
+        node._fire()
 
     def test_disabled_and_correct_output_type(self):
         node = vector.OpNode(op=IntOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
         self.source_node.data = np.array([42])
-        node._evaluate()
+        node._fire()
 
     def test_disabled_and_wrong_output_type(self):
         node = vector.OpNode(op=IntOutputTypeOperation(),
                              inputs=vector.OpNode.inputs(self.source_node))
         self.source_node.data = np.array(['42'])
-        node._evaluate()
+        node._fire()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=NoOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.source_node))
             self.source_node.data = np.array(['42'])
-            node._evaluate()
+            node._fire()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=NoneOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.source_node))
             self.source_node.data = np.array(['42'])
-            node._evaluate()
+            node._fire()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=IntOutputTypeOperation(),
                                  inputs=vector.OpNode.inputs(self.source_node))
             self.source_node.data = np.array([42])
-            node._evaluate()
+            node._fire()
 
     def test_enabled_and_wrong_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
@@ -340,7 +340,7 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
                     op=IntOutputTypeOperation(),
                     inputs=vector.OpNode.inputs(self.source_node))
                 self.source_node.data = np.array(['42'])
-                node._evaluate()
+                node._fire()
             # The name of the NumPy string type is 'string_' in Python 2 but
             # 'str_' in Python 3.
             str_type_name = self.source_node.data.dtype.type.__name__

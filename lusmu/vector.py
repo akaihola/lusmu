@@ -168,13 +168,13 @@ class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
         else:
             super(OpNode, self)._verify_output_type(data)
 
-    def _evaluate(self):
-        """Log a message when evaluating a node"""
+    def _fire(self):
+        """Log a message when firing a node"""
         # pylint: disable=E1101
         #         self.name comes from lusmu
         logger = logging.getLogger(__name__)
-        logger.debug('[%s]._evaluate()', self.name)
-        return super(OpNode, self)._evaluate()
+        logger.debug('[%s]._fire()', self.name)
+        return super(OpNode, self)._fire()
 
     def __eq__(self, other):
         """Equality comparison provided for unit test convenience"""
