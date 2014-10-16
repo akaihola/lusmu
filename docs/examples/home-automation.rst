@@ -108,14 +108,14 @@ the relative humidity is calculated:
                                  inputs=OpNode.inputs(humidity))
 
 Initially the data of all nodes is undefined.
-The :obj:`lusmu.core.DIRTY` special object is used
+The :obj:`lusmu.core.NO_DATA` special object is used
 to denote undefined data.
 The private :attr:`~lusmu.core.OpNode._data` attribute
 can be inspected to see the cached data of the node
 without triggering lazy evaluation::
 
     >>> temperature_avg._data
-    <lusmu.core.DIRTY>
+    <lusmu.core.NO_DATA>
 
 Data is fed into source nodes
 using the :func:`~lusmu.core.update_source_nodes` function::
@@ -141,7 +141,7 @@ when data of nodes are updated::
 On the other hand, the relative humidity value is not auto-calculated::
 
     >>> humidity_normalized._data
-    <lusmu.core.DIRTY>
+    <lusmu.core.NO_DATA>
 
 The dependency path from the source node to the requested humidity value
 is only evaluated when needed.

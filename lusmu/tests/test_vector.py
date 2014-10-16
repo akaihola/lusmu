@@ -13,7 +13,7 @@ from nose.tools import assert_raises, eq_
 import numpy as np
 import pandas as pd
 
-from lusmu.core import DIRTY
+from lusmu.core import NO_DATA
 from lusmu.tests.test_core import (NoOutputTypeOperation,
                                    NoneOutputTypeOperation,
                                    IntOutputTypeOperation)
@@ -44,8 +44,8 @@ def test_scalar_equality():
         vector = VectorEq(data)
         assert expected == vector._data_eq(other_data)
 
-    yield check(DIRTY, DIRTY, True)
-    yield check(DIRTY, 0, False)
+    yield check(NO_DATA, NO_DATA, True)
+    yield check(NO_DATA, 0, False)
     yield check(0, 0, True)
     yield check(0, 1, False)
     yield check(0, 0.0, False)
@@ -93,7 +93,7 @@ def test_numpy_vector_equality_others():
         vector = VectorEq(data)
         assert expected == vector._data_eq(other_data)
 
-    yield check(DIRTY, np.array([[1,2],[3,4]]), False)
+    yield check(NO_DATA, np.array([[1,2],[3,4]]), False)
     yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,4]]), True)
     yield check(np.array([[1,2],[3,4]]), np.array([[1,2],[3,5]]), False)
     yield check(np.array([[1,2],[3,4]]), [[1,2],[3,4]], False)
@@ -169,8 +169,8 @@ class SrcNodeSetDataTestCase(TestCase):
 
         eq_(None, source_node.last_timestamp)
 
-    def test_dirty_data(self):
-        source_node = vector.SrcNode(data=DIRTY)
+    def test_no_data(self):
+        source_node = vector.SrcNode(data=NO_DATA)
 
         eq_(None, source_node.last_timestamp)
 
@@ -230,8 +230,8 @@ def test_pickling():
                 'constant')
     yield check(vector.SrcNode, '_data', 42.0,
                 42.0)
-    yield check(vector.SrcNode, '_data', DIRTY,
-                DIRTY)
+    yield check(vector.SrcNode, '_data', NO_DATA,
+                NO_DATA)
     yield check(vector.SrcNode, '_data', np.array([42.0]),
                 np.array([42.0]))
     yield check(vector.SrcNode, 'last_timestamp', 1234,
@@ -269,14 +269,14 @@ def test_input_equality():
         result = a == b
         eq_(expected, result)
 
-    yield check('unnamed (auto-named) dirty data inputs',
-                SrcNode(name=None, data=DIRTY), SrcNode(name=None, data=DIRTY),
+    yield check('unnamed (auto-named) data inputs with no data',
+                SrcNode(name=None, data=NO_DATA), SrcNode(name=None, data=NO_DATA),
                 False)
     yield check('non-matching names',
-                SrcNode(name='a', data=DIRTY), SrcNode(name='b', data=DIRTY),
+                SrcNode(name='a', data=NO_DATA), SrcNode(name='b', data=NO_DATA),
                 False)
     yield check('named vs. unnamed node',
-                SrcNode(name='a', data=DIRTY), SrcNode(name=None, data=DIRTY),
+                SrcNode(name='a', data=NO_DATA), SrcNode(name=None, data=NO_DATA),
                 False)
 
 

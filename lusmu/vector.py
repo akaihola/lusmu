@@ -14,7 +14,7 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 #         mixins have few public methods, that's ok
 
 import logging
-from lusmu.core import (DIRTY,
+from lusmu.core import (NO_DATA,
                         SrcNode as LusmuSrcNode,
                         OpNode as LusmuOpNode,
                         update_source_nodes)
@@ -97,12 +97,12 @@ class NodePickleMixin(object):
 class SrcNode(NodePickleMixin, VectorEquality, LusmuSrcNode):
     """Vector compatible Lusmu source node
 
-    The data value of the source node is always set dirty when unpickling.
+    The data of the source node is always cleared when unpickling.
 
     """
     _state_attributes = NodePickleMixin._state_attributes + ('last_timestamp',)
 
-    def __init__(self, name=None, data=DIRTY):
+    def __init__(self, name=None, data=NO_DATA):
         super(SrcNode, self).__init__(name=name, data=data)
         self.last_timestamp = self._get_max_timestamp(data)
 

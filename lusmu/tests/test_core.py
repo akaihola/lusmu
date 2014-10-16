@@ -17,7 +17,7 @@ from unittest import TestCase
 from nose.tools import assert_raises
 import numpy as np
 from lusmu.core import (OpNode,
-                        DIRTY,
+                        NO_DATA,
                         SrcNode,
                         update_source_nodes_get_triggered,
                         _TRIGGERED_CACHE)
@@ -46,7 +46,7 @@ class OpNodeTestCase(TestCase):
 
     def test_name(self):
         """A node uses its name in its string representation"""
-        self.assertEqual('<ConstantNode node: DIRTY>',
+        self.assertEqual('<ConstantNode node: NO_DATA>',
                          repr(ConstantNode('node')))
 
     def test_default_name(self):
@@ -194,13 +194,13 @@ class NodeDependentTestCase(TestCase):
         self.triggered = ConstantNode('triggered', triggered=True)
         self.root._connect(self.triggered)
 
-    def test_keep_dirty(self):
-        """Setting a dirty node as dirty doesn't trigger dependents"""
-        triggered_nodes = self.root.set_data(DIRTY)
+    def test_keep_no_data(self):
+        """Clearing NO_DATA doesn't trigger a node's dependents"""
+        triggered_nodes = self.root.set_data(NO_DATA)
         self.assertEqual(set(), triggered_nodes)
 
     def test_set_data_triggers_dependents(self):
-        """Setting data for a dirty node triggers dependents"""
+        """Setting data for a node with no data triggers dependents"""
         triggered_nodes = self.root.set_data(0)
         self.assertEqual({self.triggered}, triggered_nodes)
 
@@ -211,12 +211,12 @@ class NodeDependentTestCase(TestCase):
         self.assertEqual(set(), triggered_nodes)
 
     def test_get_triggered_dependents(self):
-        """Setting data for a dirty node triggers dependents"""
+        """Setting data for a node with no data triggers dependents"""
         triggered_nodes = self.root._get_triggered_dependents()
         self.assertEqual({self.triggered}, triggered_nodes)
 
     def test_get_deep_triggered_dependents(self):
-        """Setting data for a dirty node triggers dependents tree"""
+        """Setting data for a node with no data triggers dependents tree"""
         child1 = ConstantNode('child1', triggered=True)
         child2 = ConstantNode('child2', triggered=True)
         self.triggered._connect(child1)
@@ -290,7 +290,7 @@ class NodeSetDataTestCase(TestCase):
     """Test case for SrcNode.set_data()"""
 
     def test_set_data(self):
-        """Data set for a dirty node is stored in the object"""
+        """Data set for a node with no data is stored in the object"""
         node = SrcNode('name')
         node.set_data(0)
         self.assertEqual(0, node._data)

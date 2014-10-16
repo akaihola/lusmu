@@ -53,20 +53,20 @@ else:
 _TRIGGERED_CACHE = {}
 
 
-class _DIRTY(object):
-    """Class definition for the dirty node special value"""
+class _NoData(object):
+    """Class definition for the 'missing data' special value"""
 
     def __str__(self):
-        return 'DIRTY'
+        return 'NO_DATA'
 
     def __repr__(self):
-        return '<lusmu.base.DIRTY>'
+        return '<lusmu.base.NO_DATA>'
 
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
 
-DIRTY = _DIRTY()
+NO_DATA = _NoData()
 
 
 class BaseNode(object):
@@ -74,7 +74,7 @@ class BaseNode(object):
 
     _name_counters = defaultdict(int)
 
-    def __init__(self, name=None, data=DIRTY):
+    def __init__(self, name=None, data=NO_DATA):
         self.name = name or self._generate_name()
         self._data = data
         self._dependents = set()
@@ -82,7 +82,7 @@ class BaseNode(object):
     def _connect(self, dependent):
         """Set the given node as a dependent of this OpNode or SrcNode
 
-        Immediately paints the new dependent node dirty if this node has
+        Immediately clears data from the new dependent node if this node has
         already been evaluated or if data has already been set for this
         source node.
 
@@ -91,14 +91,14 @@ class BaseNode(object):
         """
         if dependent not in self._dependents:
             self._dependents.add(dependent)
-            if self._data is not DIRTY:
-                dependent._set_data(DIRTY, get_triggered=False)
+            if self._data is not NO_DATA:
+                dependent._set_data(NO_DATA, get_triggered=False)
             _TRIGGERED_CACHE.clear()
 
     def _disconnect(self, dependent):
         """Remove given node from the set of dependents of this OpNode or SrcNode
 
-        Immediately paints the new dependent node dirty if this node has
+        Immediately clears data from the new dependent node if this node has
         previously been evaluated or if data has previously been set for
         this source node.
 
@@ -107,16 +107,16 @@ class BaseNode(object):
         """
         if dependent in self._dependents:
             self._dependents.remove(dependent)
-            if self._data is not DIRTY:
-                dependent._set_data(DIRTY, get_triggered=False)
+            if self._data is not NO_DATA:
+                dependent._set_data(NO_DATA, get_triggered=False)
             _TRIGGERED_CACHE.clear()
 
     def _set_data(self, data, get_triggered=True):
         """Set new data for this OpNode or SrcNode
 
-        If this caused the value of the data to change, paints dependent nodes
-        dirty and returns the set of those dependent nodes which are marked
-        "triggered" and should be re-evaluated.
+        If this caused the value of the data to change, clears data from
+        dependent nodes and returns the set of those dependent nodes which are
+        marked "triggered" and should be re-evaluated.
 
         When called by ``set_data`` from external code, the ``get_triggered``
         argument must be ``True`` so the return value is cached.  Internal
@@ -127,18 +127,19 @@ class BaseNode(object):
         operation nodes.
 
         """
-        # test if values of neither, one of or both old and new data are DIRTY
-        dirty_count = len([v for v in (data, self._data) if v is DIRTY])
-        if dirty_count == 2:
-            # both DIRTY, no need to touch anything
+        # test if values of neither, one of or both old and new data are
+        # NO_DATA
+        no_data_count = len([v for v in (data, self._data) if v is NO_DATA])
+        if no_data_count == 2:
+            # both NO_DATA, no need to touch anything
             return set()
-        if dirty_count == 0 and self._data_eq(data):
-            # both non-DIRTY but equal, no need to touch anything
+        if no_data_count == 0 and self._data_eq(data):
+            # both non-NO_DATA but equal, no need to touch anything
             return set()
-        # either one is DIRTY, or data values aren't equal, update the data and
-        # paint the dependent nodes dirty
+        # either one is NO_DATA, or data values aren't equal, update the data
+        # and clear data from dependent nodes
         self._data = data
-        self._set_dependents_dirty()
+        self._clear_dependents_data()
         if get_triggered:
             return self._get_triggered_dependents()
 
@@ -173,15 +174,15 @@ class BaseNode(object):
             _TRIGGERED_CACHE[self] = triggered
         return triggered
 
-    def _set_dependents_dirty(self):
-        """Paint all dependent nodes dirty
+    def _clear_dependents_data(self):
+        """Clear data from all dependent nodes
 
-        Paints direct dependent nodes dirty, which causes recursive painting
-        for the whole dependent nodes tree.
+        Clears data from direct dependent nodes , which causes recursive
+        clearing of the whole dependent nodes tree.
 
         """
         for dependent in self._dependents:
-            dependent._set_data(DIRTY, get_triggered=False)
+            dependent._set_data(NO_DATA, get_triggered=False)
 
     def _generate_name(self):
         """Generate a unique name for this OpNode or SrcNode object
@@ -235,8 +236,8 @@ class SrcNode(BaseNode):
     def set_data(self, new_data):
         """Set new data for a source node
 
-        If this caused the data value to change, paints dependent nodes dirty
-        and returns the set of those dependent nodes which are marked
+        If this caused the data value to change, clears data from dependent
+        nodes and returns the set of those dependent nodes which are marked
         "triggered" and should be re-evaluated.
 
         """
@@ -289,12 +290,12 @@ class OpNode(BaseNode):
                  inputs=((), None),
                  triggered=False):
         self._operation = op  # must be set before generating name
-        super(OpNode, self).__init__(name, data=DIRTY)
+        super(OpNode, self).__init__(name, data=NO_DATA)
         self.triggered = triggered
         self._positional_inputs = ()
         self._keyword_inputs = {}
         self.set_inputs(*inputs[0], **inputs[1] or {})
-        self._set_dependents_dirty()
+        self._clear_dependents_data()
 
     def _evaluate(self):
         """Calculate the result data for the OpNode
@@ -382,18 +383,18 @@ class OpNode(BaseNode):
             inp._connect(self)
 
     def get_data(self):
-        """Return OpNode data, evaluate if needed and mark dependents dirty"""
-        if self._data is DIRTY:
+        """Return OpNode data, evaluate if needed, clear data in dependents"""
+        if self._data is NO_DATA:
             self._data = self._evaluate()
             LOG.debug('EVALUATED %s: %s', self.name, self._data)
-            self._set_dependents_dirty()
+            self._clear_dependents_data()
         return self._data
 
     def set_data(self, new_data):
         """Set new data for an operation node
 
-        If this caused the data value to change, paints dependent nodes dirty
-        and returns the set of those dependent nodes which are marked
+        If this caused the data value to change, clears data from dependent
+        nodes and returns the set of those dependent nodes which are marked
         "triggered" and should be re-evaluated.
 
         """
