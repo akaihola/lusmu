@@ -140,8 +140,8 @@ class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
     _state_attributes = (NodePickleMixin._state_attributes +
                          ('_operation',
                           'triggered',
-                          '_positional_inputs',
-                          '_keyword_inputs'))
+                          '_ordered_input_ports',
+                          '_named_input_ports'))
 
     def _verify_output_type(self, data):
         """Assert that the given data matches the operation's output type

@@ -249,14 +249,14 @@ def test_pickling():
                 lambda _operation: _operation == sum)
     yield check(vector.OpNode, 'triggered', True,
                 True)
-    yield check(vector.OpNode, '_positional_inputs',
+    yield check(vector.OpNode, '_ordered_input_ports',
                 (vector.SrcNode(name='foo'),),
-                (lambda _positional_inputs:
-                 [n.name for n in _positional_inputs] == ['foo']))
-    yield check(vector.OpNode, '_keyword_inputs',
+                (lambda _ordered_input_ports:
+                 [n.name for n in _ordered_input_ports] == ['foo']))
+    yield check(vector.OpNode, '_named_input_ports',
                 {'foo': vector.SrcNode(name='bar')},
-                (lambda _keyword_inputs:
-                 {k: v.name for k, v in _keyword_inputs.items()}
+                (lambda _named_input_ports:
+                 {k: v.name for k, v in _named_input_ports.items()}
                  == {'foo': 'bar'}))
     yield check(vector.OpNode, 'extra_attribute', 42.0,
                 AttributeError)

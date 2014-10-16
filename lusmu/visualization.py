@@ -33,7 +33,7 @@ def collect_nodes(collected_nodes, *args):
             collected_nodes.add(node)
             collect_nodes(collected_nodes, *node._dependents)
             if isinstance(node, OpNode):
-                collect_nodes(collected_nodes, *node._iterate_inputs())
+                collect_nodes(collected_nodes, *node._iterate_input_ports())
 
 
 def get_operation_name(operation):

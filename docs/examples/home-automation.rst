@@ -12,7 +12,7 @@ and the Python :mod:`math` package::
     from lusmu.core import SrcNode, OpNode, update_source_nodes
     import math
 
-Them define the operation functions
+Then define the operation functions
 to be used in the home automation system.
 
 .. note:: Operations with positional arguments

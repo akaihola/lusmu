@@ -91,8 +91,8 @@ class OpNodeTestCase(TestCase):
         leaf = ConstantNode('node', inputs=([root], {'branch': branch}))
         self.assertEqual({leaf}, root._dependents)
         self.assertEqual({leaf}, branch._dependents)
-        self.assertEqual((root,), leaf._positional_inputs)
-        self.assertEqual({'branch': branch}, leaf._keyword_inputs)
+        self.assertEqual((root,), leaf._ordered_input_ports)
+        self.assertEqual({'branch': branch}, leaf._named_input_ports)
 
     def test_changing_inputs_disconnects_dependencies(self):
         """Old dependents are disconnected when changing inputs of a node"""
@@ -138,7 +138,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
         operation_node = OpNode(op=lambda data: data,
                                 inputs=OpNode.inputs(source_node))
         self.assertEqual(set([operation_node]), source_node._dependents)
-        self.assertEqual((source_node,), operation_node._positional_inputs)
+        self.assertEqual((source_node,), operation_node._ordered_input_ports)
         source_ref = weakref.ref(source_node)
         operation_ref = weakref.ref(operation_node)
         del source_node
@@ -154,7 +154,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
             operation_node = OpNode(op=lambda data: data,
                                     inputs=OpNode.inputs(source_node))
             self.assertEqual(set([operation_node]), source_node._dependents)
-            self.assertEqual((source_node,), operation_node._positional_inputs)
+            self.assertEqual((source_node,), operation_node._ordered_input_ports)
             return weakref.ref(source_node), weakref.ref(operation_node)
 
         input_ref, output_ref = inner()
@@ -173,7 +173,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
         operation_node = OpNode(op=lambda data: data,
                                 inputs=OpNode.inputs(source_node))
         self.assertEqual(set([operation_node]), source_node._dependents)
-        self.assertEqual((source_node,), operation_node._positional_inputs)
+        self.assertEqual((source_node,), operation_node._ordered_input_ports)
         self.assertEqual(val, source_node._data)
         source_ref = weakref.ref(source_node)
         operation_ref = weakref.ref(operation_node)

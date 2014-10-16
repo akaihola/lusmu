@@ -250,6 +250,20 @@ class SrcNode(BaseNode):
 class OpNode(BaseNode):
     """The operation node class for reactive programming
 
+    An operation node must have an operation function. The operation function
+    must accept at least one argument and return one result data value. It can
+    accept both positional and keyword arguments.
+
+    An operation node must have at least one input port. The input ports must
+    correspond to the arguments of the operation function. There can be
+    * ordered input ports (mapped to positional arguments of the operation),
+      and
+    * named input ports (mapped to keyword arguments of the operation).
+
+    One node must be assigned to each input port. Data from output ports of
+    input nodes is received into the corresponding input ports, and
+    subsequently fed into arguments of the operation function.
+
     Constructor arguments
     ---------------------
 
@@ -257,25 +271,29 @@ class OpNode(BaseNode):
             The internal name of the node. Used in the ``__repr__`` of the
             object. If omitted, a name is automatically generated.
 
-    op: callable(*positional_inputs, **keyword_inputs)
+    op: callable(*args, **kwargs)
             The function for calculating the result data of an operation node.
-            Data from input ports is provided in positional and keyword
-            arguments as defined in the ``inputs=`` argument.
+            When the node is fired, data from ordered input ports is fed into
+            positional arguments, and data from named input ports is fed into
+            keyword arguments.
 
     inputs (optional): ((SrcNode/OpNode, ...), {key: SrcNode/OpNode, ...})
             The nodes whose output ports are connected to input ports of this
             node. Input ports are mapped into the arguments of this node's
-            operation. The ``inputs`` argument can be created with
+            operation. There can be ordered input ports, named input ports, or
+            both. The ``inputs`` argument can be created with
             ``OpNode.inputs()`` which provides a cleaner syntax.
 
     triggered: boolean (default=False)
-            ``True`` is this OpNode shoud be automatically evaluated when data
-            of any OpNode or SrcNode it depends on changes
+            ``True`` if the operation of the node shoud be automatically
+            evaluated when new data is received in any of its input ports. The
+            default is to only evaluate the operation when the value of the
+            output port is requested.
 
     Examples of operation nodes::
 
         >>> source_1, source_2, exponent = [SrcNode() for i in range(3)]
-        >>> # sum OpNode with two positional input ports
+        >>> # sum OpNode with two ordered input ports
         >>> sum_node = OpNode(op=lambda *args: sum(args),
         ...                   inputs=OpNode.inputs(source_1, source_2))
         >>> # triggered (auto-calculated) OpNode with two keyword input ports
@@ -293,8 +311,8 @@ class OpNode(BaseNode):
         self._operation = op  # must be set before generating name
         super(OpNode, self).__init__(name, data=NO_DATA)
         self.triggered = triggered
-        self._positional_inputs = ()
-        self._keyword_inputs = {}
+        self._ordered_input_ports = ()
+        self._named_input_ports = {}
         self.set_inputs(*inputs[0], **inputs[1] or {})
         self._clear_dependents_data()
 
@@ -315,11 +333,13 @@ class OpNode(BaseNode):
         if not self._operation:
             raise NotImplementedError('You must define the op= argument '
                                       'when instantiating the operation node')
-        positional_data = [source_node.get_data()
-                           for source_node in self._positional_inputs]
-        keyword_data = {name: source_node.get_data()
-                        for name, source_node in items(self._keyword_inputs)}
-        data = self._operation(*positional_data, **keyword_data)
+        ordered_port_data = [
+            source_node.get_data()
+            for source_node in self._ordered_input_ports]
+        named_port_data = {
+            name: source_node.get_data()
+            for name, source_node in items(self._named_input_ports)}
+        data = self._operation(*ordered_port_data, **named_port_data)
         if ((VERIFY_OUTPUT_TYPES
              and getattr(self._operation, 'output_type', None) is not None)):
             # Output type checking has been enabled, and the node's operation
@@ -380,12 +400,12 @@ class OpNode(BaseNode):
                 .format(data=data, output_type=output_type_name, self=self))
 
     def set_inputs(self, *args, **kwargs):
-        """Replace nodes in positional and keyword input ports"""
-        for inp in self._iterate_inputs():
+        """Replace nodes for ordered and named input ports"""
+        for inp in self._iterate_input_ports():
             inp._disconnect(self)
-        self._positional_inputs = args
-        self._keyword_inputs = kwargs
-        for inp in self._iterate_inputs():
+        self._ordered_input_ports = args
+        self._named_input_ports = kwargs
+        for inp in self._iterate_input_ports():
             inp._connect(self)
 
     def get_data(self):
@@ -408,10 +428,10 @@ class OpNode(BaseNode):
 
     data = property(get_data, set_data)
 
-    def _iterate_inputs(self):
-        """Iterate through nodes in positional and keyword input ports"""
-        return itertools.chain(self._positional_inputs,
-                               values(self._keyword_inputs))
+    def _iterate_input_ports(self):
+        """Iterate through nodes in ordered and named input ports"""
+        return itertools.chain(self._ordered_input_ports,
+                               values(self._named_input_ports))
 
     def _generate_name(self):
         """Generate a unique name for this OpNode object
