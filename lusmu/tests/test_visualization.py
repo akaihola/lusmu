@@ -10,7 +10,7 @@ from lusmu.visualization import collect_nodes
 
 
 def test_collect_nodes_huge_number_of_inputs():
-    """Assert that collect_nodes accepts a large number of inputs
+    """Assert that collect_nodes can handle a large number of input ports
 
     Test that the recursion in :func:`collect_nodes` does not break with many
     inputs.

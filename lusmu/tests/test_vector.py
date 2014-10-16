@@ -262,7 +262,7 @@ def test_pickling():
                 AttributeError)
 
 
-def test_input_equality():
+def test_source_node_equality():
     @parameterize
     def check(_, a, b, expected):
         """SrcNode.__eq__ is {3} for {0}"""
@@ -270,13 +270,16 @@ def test_input_equality():
         eq_(expected, result)
 
     yield check('unnamed (auto-named) data inputs with no data',
-                SrcNode(name=None, data=NO_DATA), SrcNode(name=None, data=NO_DATA),
+                SrcNode(name=None, data=NO_DATA),
+                SrcNode(name=None, data=NO_DATA),
                 False)
     yield check('non-matching names',
-                SrcNode(name='a', data=NO_DATA), SrcNode(name='b', data=NO_DATA),
+                SrcNode(name='a', data=NO_DATA),
+                SrcNode(name='b', data=NO_DATA),
                 False)
     yield check('named vs. unnamed node',
-                SrcNode(name='a', data=NO_DATA), SrcNode(name=None, data=NO_DATA),
+                SrcNode(name='a', data=NO_DATA),
+                SrcNode(name=None, data=NO_DATA),
                 False)
 
 
@@ -332,9 +335,10 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
     def test_enabled_and_wrong_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             with assert_raises(TypeError) as exc:
-                node = vector.OpNode(name='node',
-                                     op=IntOutputTypeOperation(),
-                                     inputs=vector.OpNode.inputs(self.source_node))
+                node = vector.OpNode(
+                    name='node',
+                    op=IntOutputTypeOperation(),
+                    inputs=vector.OpNode.inputs(self.source_node))
                 self.source_node.data = np.array(['42'])
                 node._evaluate()
             # The name of the NumPy string type is 'string_' in Python 2 but

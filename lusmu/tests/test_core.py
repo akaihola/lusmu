@@ -85,7 +85,7 @@ class OpNodeTestCase(TestCase):
         self.assertEqual('CounterNodeC-2', CounterNodeC().name)
 
     def test_initial_inputs(self):
-        """Inputs of a node can be set up in the constructor"""
+        """Nodes can be connected to input ports in the constructor"""
         root = ConstantNode('root')
         branch = ConstantNode('branch')
         leaf = ConstantNode('node', inputs=([root], {'branch': branch}))
@@ -95,7 +95,7 @@ class OpNodeTestCase(TestCase):
         self.assertEqual({'branch': branch}, leaf._keyword_inputs)
 
     def test_changing_inputs_disconnects_dependencies(self):
-        """Old dependencies are disconnected when changing inputs of a node"""
+        """Old dependents are disconnected when changing inputs of a node"""
         root1 = ConstantNode('root1')
         leaf = ConstantNode('leaf', inputs=([root1], {}))
         self.assertEqual({leaf}, root1._dependents)

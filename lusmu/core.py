@@ -259,12 +259,13 @@ class OpNode(BaseNode):
 
     op: callable(*positional_inputs, **keyword_inputs)
             The function for calculating the result data of an operation node.
-            Data from inputs is provided in positional and keyword arguments
-            as defined in the ``inputs=`` argument.
+            Data from input ports is provided in positional and keyword
+            arguments as defined in the ``inputs=`` argument.
 
     inputs (optional): ((SrcNode/OpNode, ...), {key: SrcNode/OpNode, ...})
-            The nodes whose data is used as inputs for
-            the operation. This argument can be created with
+            The nodes whose output ports are connected to input ports of this
+            node. Input ports are mapped into the arguments of this node's
+            operation. The ``inputs`` argument can be created with
             ``OpNode.inputs()`` which provides a cleaner syntax.
 
     triggered: boolean (default=False)
@@ -274,10 +275,10 @@ class OpNode(BaseNode):
     Examples of operation nodes::
 
         >>> source_1, source_2, exponent = [SrcNode() for i in range(3)]
-        >>> # sum OpNode with two positional inputs
+        >>> # sum OpNode with two positional input ports
         >>> sum_node = OpNode(op=lambda *args: sum(args),
         ...                   inputs=OpNode.inputs(source_1, source_2))
-        >>> # triggered (auto-calculated) OpNode with two keyword inputs
+        >>> # triggered (auto-calculated) OpNode with two keyword input ports
         >>> triggered_node = OpNode(
         ...     op=lambda a, x: a ** x,
         ...     inputs=OpNode.inputs(a=source_1, x=exponent),
@@ -300,8 +301,12 @@ class OpNode(BaseNode):
     def _evaluate(self):
         """Calculate the result data for the OpNode
 
-        Calls the operation of the node using data from inputs of the
-        node. Returns the result of the operation function.
+        Calls the operation of the node using data from nodes connected to the
+        input ports of this node. Returns the result of the operation function.
+
+        Reading data from input nodes triggers evaluation of those nodes'
+        operations if necessary. This results in the lazy evaluation mechanism
+        for the graph.
 
         This function can also be overridden in subclasses if a class-based
         approach to defining operations is preferred.
@@ -310,10 +315,10 @@ class OpNode(BaseNode):
         if not self._operation:
             raise NotImplementedError('You must define the op= argument '
                                       'when instantiating the operation node')
-        positional_data = [i.get_data()
-                           for i in self._positional_inputs]
-        keyword_data = {name: i.get_data()
-                        for name, i in items(self._keyword_inputs)}
+        positional_data = [source_node.get_data()
+                           for source_node in self._positional_inputs]
+        keyword_data = {name: source_node.get_data()
+                        for name, source_node in items(self._keyword_inputs)}
         data = self._operation(*positional_data, **keyword_data)
         if ((VERIFY_OUTPUT_TYPES
              and getattr(self._operation, 'output_type', None) is not None)):
@@ -336,8 +341,9 @@ class OpNode(BaseNode):
 
         instead of this::
 
-            >>> node = OpNode(inputs=([inputs[0], inputs[1]],
-            ...                       {'kw1': inputs[2], 'kw2': inputs[3]}))
+            >>> node = OpNode(inputs=(
+            ...     [inputs[0], inputs[1]],
+            ...     {'kw1': inputs[2], 'kw2': inputs[3]}))
 
         """
         return args, kwargs
@@ -374,7 +380,7 @@ class OpNode(BaseNode):
                 .format(data=data, output_type=output_type_name, self=self))
 
     def set_inputs(self, *args, **kwargs):
-        """Replace current positional and keyword inputs"""
+        """Replace nodes in positional and keyword input ports"""
         for inp in self._iterate_inputs():
             inp._disconnect(self)
         self._positional_inputs = args
@@ -383,7 +389,7 @@ class OpNode(BaseNode):
             inp._connect(self)
 
     def get_data(self):
-        """Return OpNode data, evaluate if needed, clear data in dependents"""
+        """Return node data, evaluate if needed, clear data in dependents"""
         if self._data is NO_DATA:
             self._data = self._evaluate()
             LOG.debug('EVALUATED %s: %s', self.name, self._data)
@@ -403,7 +409,7 @@ class OpNode(BaseNode):
     data = property(get_data, set_data)
 
     def _iterate_inputs(self):
-        """Iterate through positional and keyword inputs"""
+        """Iterate through nodes in positional and keyword input ports"""
         return itertools.chain(self._positional_inputs,
                                values(self._keyword_inputs))
 

@@ -13,9 +13,9 @@ Lusmu is a Python library for `reactive programming`_ (a form of
 `dataflow programming`_).  Operations on data are done using a
 `directed graph`_ which consists of source nodes and operation nodes.
 
-Lusmu uses the `invalidate/lazy-revalidate`_ evaluation model: reading
-the data of a node triggers its calculation operation and reads
-data from its inputs.  Thus, only required calculations are executed.
+Lusmu uses the `invalidate/lazy-revalidate`_ evaluation model: reading the
+data from an output port of a node triggers its calculation operation and reads
+data from its input ports.  Thus, only required calculations are executed.
 
 A minimal example
 -----------------
