@@ -22,11 +22,11 @@ A minimal example
 
 ::
 
-    from lusmu.core import Input, Node, update_inputs
+    from lusmu.core import Input, OpNode, update_inputs
 
     root = Input()
-    square = Node(action=lambda x: x ** 2,
-                  inputs=Node.inputs(root))
+    square = OpNode(action=lambda x: x ** 2,
+                  inputs=OpNode.inputs(root))
 
     update_inputs([(root, 5)])
     print square.value

@@ -246,7 +246,7 @@ class Input(BaseNode):
 
 
 @total_ordering
-class Node(BaseNode):
+class OpNode(BaseNode):
     """The Node class for reactive programming
 
     Constructor arguments
@@ -261,9 +261,9 @@ class Node(BaseNode):
             Values from inputs are provided in positional and keyword arguments
             as defined in the ``inputs=`` argument.
 
-    inputs (optional): ((Input/Node, ...), {key: Input/Node, ...})
+    inputs (optional): ((Input/OpNode, ...), {key: Input/OpNode, ...})
             The Nodes and Inputs whose values are used as inputs for the
-            action.  This argument can be created with ``Node.inputs()`` which
+            action.  This argument can be created with ``OpNode.inputs()`` which
             provides a cleaner syntax.
 
     triggered: boolean (default=False)
@@ -274,12 +274,12 @@ class Node(BaseNode):
 
         >>> input_1, input_2, exponent = [Input() for i in range(3)]
         >>> # sum Node with two positional inputs
-        >>> sum_node = Node(action=lambda *args: sum(args),
-        ...                 inputs=Node.inputs(input_1, input_2))
+        >>> sum_node = OpNode(action=lambda *args: sum(args),
+        ...                   inputs=OpNode.inputs(input_1, input_2))
         >>> # triggered (auto-calculated) Node with two keyword inputs
-        >>> triggered_node = Node(
+        >>> triggered_node = OpNode(
         ...     action=lambda a, x: a ** x,
-        ...     inputs=Node.inputs(a=input_1, x=exponent),
+        ...     inputs=OpNode.inputs(a=input_1, x=exponent),
         ...     triggered=True)
 
     """
@@ -289,7 +289,7 @@ class Node(BaseNode):
                  inputs=((), None),
                  triggered=False):
         self._action = action  # must be set before generating name
-        super(Node, self).__init__(name, value=DIRTY)
+        super(OpNode, self).__init__(name, value=DIRTY)
         self.triggered = triggered
         self._positional_inputs = ()
         self._keyword_inputs = {}
@@ -329,13 +329,14 @@ class Node(BaseNode):
         Allows writing this::
 
             >>> inputs = [Input() for i in range(4)]
-            >>> node = Node(inputs=Node.inputs(inputs[0], inputs[1],
-            ...                                kw1=inputs[2], kw2=inputs[3]))
+            >>> node = OpNode(inputs=OpNode.inputs(
+            ...     inputs[0], inputs[1],
+            ...     kw1=inputs[2], kw2=inputs[3]))
 
         instead of this::
 
-            >>> node = Node(inputs=([inputs[0], inputs[1]],
-            ...                     {'kw1': inputs[2], 'kw2': inputs[3]}))
+            >>> node = OpNode(inputs=([inputs[0], inputs[1]],
+            ...                       {'kw1': inputs[2], 'kw2': inputs[3]}))
 
         """
         return args, kwargs
@@ -418,7 +419,7 @@ class Node(BaseNode):
         """
         action_name = get_func_name(self._action, '<lambda>')
         if action_name == '<lambda>':
-            return super(Node, self)._generate_name()
+            return super(OpNode, self)._generate_name()
         counters = self._name_counters
         counters[self.__class__, action_name] += 1
         template = '{class_name}-{action_name}-{counter}'

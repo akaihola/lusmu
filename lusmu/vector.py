@@ -9,14 +9,14 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 # pylint: disable=W0611
 #         update_inputs is provided as a convenience for importing it from the
-#         same place as the Input and Node classes
+#         same place as the Input and OpNode classes
 # pylint: disable=R0903
 #         mixins have few public methods, that's ok
 
 import logging
 from lusmu.core import (DIRTY,
                         Input as LusmuInput,
-                        Node as LusmuNode,
+                        OpNode as LusmuOpNode,
                         update_inputs)
 import numexpr as ne
 import numpy as np
@@ -49,7 +49,7 @@ def vector_eq(a, b):
 class VectorEquality(object):
     """Mixin for extending Lusmu Inputs and Nodes to work with vector values"""
     def _value_eq(self, other_value):
-        """Replace the equality test of Input/Node values
+        """Replace the equality test of Input/OpNode values
 
         Lusmu uses the ``==`` operator by default.  It doesn't work correctly
         with vectors which have more than one value – ``bool(vec1 == vec2)``
@@ -134,7 +134,7 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
     __hash__ = LusmuInput.__hash__
 
 
-class Node(NodePickleMixin, VectorEquality, LusmuNode):
+class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
     """Vector compatible Lusmu Node"""
     _state_attributes = (NodePickleMixin._state_attributes +
                          ('_action',
@@ -165,7 +165,7 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
                             value=value,
                             self=self))
         else:
-            super(Node, self)._verify_output_type(value)
+            super(OpNode, self)._verify_output_type(value)
 
     def _evaluate(self):
         """Log a message when evaluating a node"""
@@ -173,7 +173,7 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
         #         self.name comes from lusmu
         logger = logging.getLogger(__name__)
         logger.debug('[%s]._evaluate()', self.name)
-        return super(Node, self)._evaluate()
+        return super(OpNode, self)._evaluate()
 
     def __eq__(self, other):
         """Equality comparison provided for unit test convenience"""
@@ -181,4 +181,4 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
 
     # In Python 3, the __hash__ method needs to be defined when __eq__ is
     # defined:
-    __hash__ = LusmuNode.__hash__
+    __hash__ = LusmuOpNode.__hash__

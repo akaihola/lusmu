@@ -14,7 +14,7 @@ from __future__ import print_function, unicode_literals
 import re
 from textwrap import dedent
 
-from lusmu.core import Input, Node
+from lusmu.core import Input, OpNode
 import subprocess
 
 
@@ -28,7 +28,7 @@ def collect_nodes(collected_nodes, *args):
         if node not in collected_nodes:
             collected_nodes.add(node)
             collect_nodes(collected_nodes, *node._dependents)
-            if isinstance(node, Node):
+            if isinstance(node, OpNode):
                 collect_nodes(collected_nodes, *node._iterate_inputs())
 
 
@@ -48,7 +48,7 @@ def format_node_default(node_id, node):
     action = ('{br}{br}<FONT COLOR="#888888">{action}</FONT>'
               .format(br=' <BR ALIGN="LEFT"/>',
                       action=get_action_name(node._action))
-              if isinstance(node, Node)
+              if isinstance(node, OpNode)
               else '')
     yield ('  {node_id} '
            '[label=<<B>{name}</B>'

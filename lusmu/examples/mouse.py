@@ -22,7 +22,7 @@ nodes and connections on the screen.  The diagram is saved in ``mouse.gif``.
 """
 
 
-from lusmu.core import Input, Node, update_inputs
+from lusmu.core import Input, OpNode, update_inputs
 from lusmu.visualization import visualize_graph
 import math
 import Tkinter
@@ -50,18 +50,18 @@ def get_distance_description(is_close):
 
 mousex = Input(name='mouse x')
 mousey = Input(name='mouse y')
-distance = Node(
+distance = OpNode(
     name='distance',
     action=get_distance,
-    inputs=Node.inputs(mousex, mousey))
-is_close = Node(
+    inputs=OpNode.inputs(mousex, mousey))
+is_close = OpNode(
     name='is close',
     action=is_close_to_target,
-    inputs=Node.inputs(distance))
-alert = Node(
+    inputs=OpNode.inputs(distance))
+alert = OpNode(
     name='alert',
     action=get_distance_description,
-    inputs=Node.inputs(is_close))
+    inputs=OpNode.inputs(is_close))
 
 
 def onclick(event):

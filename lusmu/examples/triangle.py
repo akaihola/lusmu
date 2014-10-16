@@ -1,4 +1,4 @@
-from lusmu.core import Input, Node, update_inputs
+from lusmu.core import Input, OpNode, update_inputs
 from lusmu.visualization import visualize_graph
 import math
 import operator
@@ -21,30 +21,30 @@ def sqrt(square):
     return math.sqrt(square)
 
 
-area_a = Node(name='square of a',
+area_a = OpNode(name='square of a',
               action=square,
-              inputs=Node.inputs(a))
-area_b = Node(name='square of b',
+              inputs=OpNode.inputs(a))
+area_b = OpNode(name='square of b',
               action=square,
-              inputs=Node.inputs(b))
-area_hypothenuse = Node(name='square of hypothenuse',
+              inputs=OpNode.inputs(b))
+area_hypothenuse = OpNode(name='square of hypothenuse',
                         action=sum_,
-                        inputs=Node.inputs(area_a, area_b))
-hypothenuse = Node(name='length of hypothenuse',
+                        inputs=OpNode.inputs(area_a, area_b))
+hypothenuse = OpNode(name='length of hypothenuse',
                    action=sqrt,
-                   inputs=Node.inputs(area_hypothenuse))
-sin_alpha = Node(name='sin of alpha',
+                   inputs=OpNode.inputs(area_hypothenuse))
+sin_alpha = OpNode(name='sin of alpha',
                  action=operator.div,
-                 inputs=Node.inputs(a, hypothenuse))
-alpha = Node(name='angle alpha',
+                 inputs=OpNode.inputs(a, hypothenuse))
+alpha = OpNode(name='angle alpha',
              action=math.asin,
-             inputs=Node.inputs(sin_alpha))
-sin_beta = Node(name='sin of beta',
+             inputs=OpNode.inputs(sin_alpha))
+sin_beta = OpNode(name='sin of beta',
                 action=operator.div,
-                inputs=Node.inputs(b, hypothenuse))
-beta = Node(name='angle beta',
+                inputs=OpNode.inputs(b, hypothenuse))
+beta = OpNode(name='angle beta',
             action=math.asin,
-            inputs=Node.inputs(sin_beta))
+            inputs=OpNode.inputs(sin_beta))
 
 
 print 'Enter float values for a and b, e.g.\n> 3.0 4.0'

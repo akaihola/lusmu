@@ -16,7 +16,7 @@ import gc
 from unittest import TestCase
 from nose.tools import assert_raises
 import numpy as np
-from lusmu.core import (Node,
+from lusmu.core import (OpNode,
                         DIRTY,
                         Input,
                         update_inputs_get_triggered,
@@ -25,22 +25,22 @@ from mock import patch
 import weakref
 
 
-class IncompleteNode(Node):
+class IncompleteNode(OpNode):
     """A Node subclass which doesn't implement ._evaluate()"""
     pass
 
 
-class ConstantNode(Node):
+class ConstantNode(OpNode):
     """A Node subclass which always evaluates to the value 1"""
     def _evaluate(self):
         return 1
 
 
 class NodeTestCase(TestCase):
-    """Test case for basic functionality of the Node class"""
+    """Test case for basic functionality of the OpNode class"""
 
     def test_missing_evaluate(self):
-        """The Node class must be subclassed, it doesn't work by itself"""
+        """The OpNode class must be subclassed, it doesn't work by itself"""
         with self.assertRaises(NotImplementedError):
             IncompleteNode('name').get_value()
 
@@ -52,14 +52,14 @@ class NodeTestCase(TestCase):
     def test_default_name(self):
         """A default name is generated for a node if the name is omitted"""
         class AutoNamedInput(Input):
-            """Node subclass for testing automatic names"""
+            """OpNode subclass for testing automatic names"""
 
         self.assertEqual('AutoNamedInput-1', AutoNamedInput().name)
 
     def test_default_name_with_action(self):
         """The default name of a node includes action func_name if available"""
-        class NamedNode(Node):
-            """Node subclass for testing action names in automatic names"""
+        class NamedNode(OpNode):
+            """OpNode subclass for testing action names in automatic names"""
 
         def my_action(_arg):
             """Dummy example action"""
@@ -77,7 +77,7 @@ class NodeTestCase(TestCase):
         class CounterNodeB(Input):
             """Node subclass for testing"""
 
-        class CounterNodeC(Node):
+        class CounterNodeC(OpNode):
             """Node subclass for testing"""
 
         self.assertEqual('CounterNodeB-1', CounterNodeB().name)
@@ -114,14 +114,14 @@ class NodeTestCase(TestCase):
     def test_value_property_setter(self):
         """The value of a Node can be set with the .value property"""
         root = Input()
-        leaf = Node(action=lambda value: value, inputs=Node.inputs(root))
+        leaf = OpNode(action=lambda value: value, inputs=OpNode.inputs(root))
         root.value = 5
         self.assertEqual(5, leaf.get_value())
 
     def test_value_property_getter(self):
         """The value of a Node can be set with the .value property"""
         root = Input(value=5)
-        leaf = Node(action=lambda value: value, inputs=Node.inputs(root))
+        leaf = OpNode(action=lambda value: value, inputs=OpNode.inputs(root))
         self.assertEqual(5, leaf.value)
 
 
@@ -135,8 +135,8 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
     def test_garbage_collection(self):
         """Interconnected nodes are garbage collected"""
         input_node = Input()
-        output_node = Node(action=lambda value: value,
-                           inputs=Node.inputs(input_node))
+        output_node = OpNode(action=lambda value: value,
+                             inputs=OpNode.inputs(input_node))
         self.assertEqual(set([output_node]), input_node._dependents)
         self.assertEqual((input_node,), output_node._positional_inputs)
         input_ref = weakref.ref(input_node)
@@ -151,8 +151,8 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
         """Interconnected nodes which out of scope are garbage collected"""
         def inner():
             input_node = Input()
-            output_node = Node(action=lambda value: value,
-                               inputs=Node.inputs(input_node))
+            output_node = OpNode(action=lambda value: value,
+                                 inputs=OpNode.inputs(input_node))
             self.assertEqual(set([output_node]), input_node._dependents)
             self.assertEqual((input_node,), output_node._positional_inputs)
             return weakref.ref(input_node), weakref.ref(output_node)
@@ -170,8 +170,8 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
 
         val = Val()
         input_node = Input(value=val)
-        output_node = Node(action=lambda value: value,
-                           inputs=Node.inputs(input_node))
+        output_node = OpNode(action=lambda value: value,
+                              inputs=OpNode.inputs(input_node))
         self.assertEqual(set([output_node]), input_node._dependents)
         self.assertEqual((input_node,), output_node._positional_inputs)
         self.assertEqual(val, input_node._value)
@@ -332,15 +332,15 @@ class HomeAutomationTestCase(TestCase):
         """A simple example in the home automation domain"""
         brightness_1 = Input()
         brightness_2 = Input()
-        brightness_sum = Node(action=lambda *args: sum(args),
-                              inputs=Node.inputs(brightness_1, brightness_2))
+        brightness_sum = OpNode(action=lambda *args: sum(args),
+                                inputs=OpNode.inputs(brightness_1, brightness_2))
 
         def inverse(value):
             """Return the inverse of a value in the range 0..510"""
             return 510 - value
 
-        brightness_inverse = Node(action=inverse,
-                                  inputs=Node.inputs(brightness_sum))
+        brightness_inverse = OpNode(action=inverse,
+                                    inputs=OpNode.inputs(brightness_sum))
 
         lamp_power_changes = []
 
@@ -348,9 +348,9 @@ class HomeAutomationTestCase(TestCase):
             """Log changes to lamp power"""
             lamp_power_changes.append(value)
 
-        _lamp_power = Node(action=set_lamp_power,
-                           inputs=Node.inputs(brightness_inverse),
-                           triggered=True)
+        _lamp_power = OpNode(action=set_lamp_power,
+                             inputs=OpNode.inputs(brightness_inverse),
+                             triggered=True)
 
         update_inputs_get_triggered([(brightness_1, 20),
                                     (brightness_2, 40)])
@@ -393,56 +393,56 @@ class NodeVerifyOutputTypeTestCase(TestCase):
         self.input = Input()
 
     def test_disabled_and_no_output_type(self):
-        node = Node(action=NoOutputTypeAction(),
-                    inputs=Node.inputs(self.input))
+        node = OpNode(action=NoOutputTypeAction(),
+                      inputs=OpNode.inputs(self.input))
         self.input.value = '42'
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
-        node = Node(action=NoneOutputTypeAction(),
-                    inputs=Node.inputs(self.input))
+        node = OpNode(action=NoneOutputTypeAction(),
+                      inputs=OpNode.inputs(self.input))
         self.input.value = '42'
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
-        node = Node(action=IntOutputTypeAction(),
-                    inputs=Node.inputs(self.input))
+        node = OpNode(action=IntOutputTypeAction(),
+                      inputs=OpNode.inputs(self.input))
         self.input.value = 42
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
-        node = Node(action=IntOutputTypeAction(),
-                    inputs=Node.inputs(self.input))
+        node = OpNode(action=IntOutputTypeAction(),
+                      inputs=OpNode.inputs(self.input))
         self.input.value = '42'
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = Node(action=NoOutputTypeAction(),
-                        inputs=Node.inputs(self.input))
+            node = OpNode(action=NoOutputTypeAction(),
+                          inputs=OpNode.inputs(self.input))
             self.input.value = '42'
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = Node(action=NoneOutputTypeAction(),
-                        inputs=Node.inputs(self.input))
+            node = OpNode(action=NoneOutputTypeAction(),
+                          inputs=OpNode.inputs(self.input))
             self.input.value = '42'
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = Node(action=IntOutputTypeAction(),
-                        inputs=Node.inputs(self.input))
+            node = OpNode(action=IntOutputTypeAction(),
+                          inputs=OpNode.inputs(self.input))
             self.input.value = 42
             node._evaluate()
 
     def test_enabled_and_wrong_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             with assert_raises(TypeError) as exc:
-                node = Node(name='node',
-                            action=IntOutputTypeAction(),
-                            inputs=Node.inputs(self.input))
+                node = OpNode(name='node',
+                              action=IntOutputTypeAction(),
+                              inputs=OpNode.inputs(self.input))
                 self.input.value = '42'
                 node._evaluate()
             self.assertEqual(

@@ -5,7 +5,7 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 """
 
-from lusmu.core import Node, Input
+from lusmu.core import OpNode, Input
 from lusmu.visualization import collect_nodes
 
 
@@ -21,6 +21,6 @@ def test_collect_nodes_huge_number_of_inputs():
 
     for val in range(1000):
         nodes.append(Input('input%d' % val))
-    nodes.append(Node(inputs=Node.inputs(*nodes)))
+    nodes.append(OpNode(inputs=OpNode.inputs(*nodes)))
 
     collect_nodes(collected_nodes, nodes[-1])

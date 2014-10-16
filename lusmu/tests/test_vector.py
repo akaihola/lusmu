@@ -239,26 +239,26 @@ def test_pickling():
     yield check(vector.Input, 'extra_attribute', 42.0,
                 AttributeError)
 
-    yield check(vector.Node, 'name', 'constant',
+    yield check(vector.OpNode, 'name', 'constant',
                 'constant')
-    yield check(vector.Node, '_value', 42.0,
+    yield check(vector.OpNode, '_value', 42.0,
                 42.0)
-    yield check(vector.Node, '_value', np.array([42.0]),
+    yield check(vector.OpNode, '_value', np.array([42.0]),
                 np.array([42.0]))
-    yield check(vector.Node, '_action', sum,
+    yield check(vector.OpNode, '_action', sum,
                 lambda _action: _action == sum)
-    yield check(vector.Node, 'triggered', True,
+    yield check(vector.OpNode, 'triggered', True,
                 True)
-    yield check(vector.Node, '_positional_inputs',
+    yield check(vector.OpNode, '_positional_inputs',
                 (vector.Input(name='foo'),),
                 (lambda _positional_inputs:
                  [n.name for n in _positional_inputs] == ['foo']))
-    yield check(vector.Node, '_keyword_inputs',
+    yield check(vector.OpNode, '_keyword_inputs',
                 {'foo': vector.Input(name='bar')},
                 (lambda _keyword_inputs:
                  {k: v.name for k, v in _keyword_inputs.items()}
                  == {'foo': 'bar'}))
-    yield check(vector.Node, 'extra_attribute', 42.0,
+    yield check(vector.OpNode, 'extra_attribute', 42.0,
                 AttributeError)
 
 
@@ -285,56 +285,56 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
         self.input = Input()
 
     def test_disabled_and_no_output_type(self):
-        node = vector.Node(action=NoOutputTypeAction(),
-                           inputs=vector.Node.inputs(self.input))
+        node = vector.OpNode(action=NoOutputTypeAction(),
+                             inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
-        node = vector.Node(action=NoneOutputTypeAction(),
-                           inputs=vector.Node.inputs(self.input))
+        node = vector.OpNode(action=NoneOutputTypeAction(),
+                             inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
-        node = vector.Node(action=IntOutputTypeAction(),
-                           inputs=vector.Node.inputs(self.input))
+        node = vector.OpNode(action=IntOutputTypeAction(),
+                             inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array([42])
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
-        node = vector.Node(action=IntOutputTypeAction(),
-                           inputs=vector.Node.inputs(self.input))
+        node = vector.OpNode(action=IntOutputTypeAction(),
+                             inputs=vector.OpNode.inputs(self.input))
         self.input.value = np.array(['42'])
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = vector.Node(action=NoOutputTypeAction(),
-                               inputs=vector.Node.inputs(self.input))
+            node = vector.OpNode(action=NoOutputTypeAction(),
+                                 inputs=vector.OpNode.inputs(self.input))
             self.input.value = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = vector.Node(action=NoneOutputTypeAction(),
-                               inputs=vector.Node.inputs(self.input))
+            node = vector.OpNode(action=NoneOutputTypeAction(),
+                                 inputs=vector.OpNode.inputs(self.input))
             self.input.value = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
-            node = vector.Node(action=IntOutputTypeAction(),
-                               inputs=vector.Node.inputs(self.input))
+            node = vector.OpNode(action=IntOutputTypeAction(),
+                                 inputs=vector.OpNode.inputs(self.input))
             self.input.value = np.array([42])
             node._evaluate()
 
     def test_enabled_and_wrong_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             with assert_raises(TypeError) as exc:
-                node = vector.Node(name='node',
-                                   action=IntOutputTypeAction(),
-                                   inputs=vector.Node.inputs(self.input))
+                node = vector.OpNode(name='node',
+                                     action=IntOutputTypeAction(),
+                                     inputs=vector.OpNode.inputs(self.input))
                 self.input.value = np.array(['42'])
                 node._evaluate()
             # The name of the NumPy string type is 'string_' in Python 2 but
