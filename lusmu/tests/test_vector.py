@@ -17,7 +17,7 @@ from lusmu.core import DIRTY
 from lusmu.tests.test_core import (NoOutputTypeOperation,
                                    NoneOutputTypeOperation,
                                    IntOutputTypeOperation)
-from lusmu.vector import Input
+from lusmu.vector import SrcNode
 from lusmu import vector
 from lusmu.tests.tools import parameterize
 
@@ -163,37 +163,37 @@ def test_mixed_vector_equality():
     yield check([4, 5], ['2013-10-15', '2013-10-16'], [4], False)
 
 
-class InputSetValueTestCase(TestCase):
+class SrcNodeSetValueTestCase(TestCase):
     def test_no_value(self):
-        inp = vector.Input()
+        source_node = vector.SrcNode()
 
-        eq_(None, inp.last_timestamp)
+        eq_(None, source_node.last_timestamp)
 
     def test_dirty_value(self):
-        inp = vector.Input(value=DIRTY)
+        source_node = vector.SrcNode(value=DIRTY)
 
-        eq_(None, inp.last_timestamp)
+        eq_(None, source_node.last_timestamp)
 
     def test_initial_value(self):
-        inp = vector.Input(value=pd.Series([1, 2], [1001, 1002]))
+        source_node = vector.SrcNode(value=pd.Series([1, 2], [1001, 1002]))
 
-        eq_(1002, inp.last_timestamp)
+        eq_(1002, source_node.last_timestamp)
 
     def test_set_value(self):
-        inp = vector.Input()
-        inp.value = pd.Series([1, 2], index=[1001, 1002])
+        source_node = vector.SrcNode()
+        source_node.value = pd.Series([1, 2], index=[1001, 1002])
 
-        eq_(1002, inp.last_timestamp)
+        eq_(1002, source_node.last_timestamp)
 
     def test_scalar_value(self):
-        inp = vector.Input(value=100000.0)
+        source_node = vector.SrcNode(value=100000.0)
 
-        eq_(None, inp.last_timestamp)
+        eq_(None, source_node.last_timestamp)
 
     def test_array_value(self):
-        inp = vector.Input(value=np.array([1, 2]))
+        source_node = vector.SrcNode(value=np.array([1, 2]))
 
-        eq_(None, inp.last_timestamp)
+        eq_(None, source_node.last_timestamp)
 
 
 def _pickle_unpickle(data):
@@ -226,17 +226,17 @@ def test_pickling():
 
     # arguments: (node class, attribute, value to set,
     #             expected value/exception/test)
-    yield check(vector.Input, 'name', 'constant',
+    yield check(vector.SrcNode, 'name', 'constant',
                 'constant')
-    yield check(vector.Input, '_value', 42.0,
+    yield check(vector.SrcNode, '_value', 42.0,
                 42.0)
-    yield check(vector.Input, '_value', DIRTY,
+    yield check(vector.SrcNode, '_value', DIRTY,
                 DIRTY)
-    yield check(vector.Input, '_value', np.array([42.0]),
+    yield check(vector.SrcNode, '_value', np.array([42.0]),
                 np.array([42.0]))
-    yield check(vector.Input, 'last_timestamp', 1234,
+    yield check(vector.SrcNode, 'last_timestamp', 1234,
                 1234)
-    yield check(vector.Input, 'extra_attribute', 42.0,
+    yield check(vector.SrcNode, 'extra_attribute', 42.0,
                 AttributeError)
 
     yield check(vector.OpNode, 'name', 'constant',
@@ -250,11 +250,11 @@ def test_pickling():
     yield check(vector.OpNode, 'triggered', True,
                 True)
     yield check(vector.OpNode, '_positional_inputs',
-                (vector.Input(name='foo'),),
+                (vector.SrcNode(name='foo'),),
                 (lambda _positional_inputs:
                  [n.name for n in _positional_inputs] == ['foo']))
     yield check(vector.OpNode, '_keyword_inputs',
-                {'foo': vector.Input(name='bar')},
+                {'foo': vector.SrcNode(name='bar')},
                 (lambda _keyword_inputs:
                  {k: v.name for k, v in _keyword_inputs.items()}
                  == {'foo': 'bar'}))
@@ -265,68 +265,68 @@ def test_pickling():
 def test_input_equality():
     @parameterize
     def check(_, a, b, expected):
-        """Input.__eq__ is {3} for {0}"""
+        """SrcNode.__eq__ is {3} for {0}"""
         result = a == b
         eq_(expected, result)
 
     yield check('unnamed (auto-named) dirty value inputs',
-                Input(name=None, value=DIRTY), Input(name=None, value=DIRTY),
+                SrcNode(name=None, value=DIRTY), SrcNode(name=None, value=DIRTY),
                 False)
     yield check('non-matching names',
-                Input(name='a', value=DIRTY), Input(name='b', value=DIRTY),
+                SrcNode(name='a', value=DIRTY), SrcNode(name='b', value=DIRTY),
                 False)
     yield check('named vs. unnamed node',
-                Input(name='a', value=DIRTY), Input(name=None, value=DIRTY),
+                SrcNode(name='a', value=DIRTY), SrcNode(name=None, value=DIRTY),
                 False)
 
 
 class VectorNodeVerifyOutputTypeTestCase(TestCase):
     def setUp(self):
-        self.input = Input()
+        self.source_node = SrcNode()
 
     def test_disabled_and_no_output_type(self):
         node = vector.OpNode(op=NoOutputTypeOperation(),
-                             inputs=vector.OpNode.inputs(self.input))
-        self.input.value = np.array(['42'])
+                             inputs=vector.OpNode.inputs(self.source_node))
+        self.source_node.value = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
         node = vector.OpNode(op=NoneOutputTypeOperation(),
-                             inputs=vector.OpNode.inputs(self.input))
-        self.input.value = np.array(['42'])
+                             inputs=vector.OpNode.inputs(self.source_node))
+        self.source_node.value = np.array(['42'])
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
         node = vector.OpNode(op=IntOutputTypeOperation(),
-                             inputs=vector.OpNode.inputs(self.input))
-        self.input.value = np.array([42])
+                             inputs=vector.OpNode.inputs(self.source_node))
+        self.source_node.value = np.array([42])
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
         node = vector.OpNode(op=IntOutputTypeOperation(),
-                             inputs=vector.OpNode.inputs(self.input))
-        self.input.value = np.array(['42'])
+                             inputs=vector.OpNode.inputs(self.source_node))
+        self.source_node.value = np.array(['42'])
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=NoOutputTypeOperation(),
-                                 inputs=vector.OpNode.inputs(self.input))
-            self.input.value = np.array(['42'])
+                                 inputs=vector.OpNode.inputs(self.source_node))
+            self.source_node.value = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=NoneOutputTypeOperation(),
-                                 inputs=vector.OpNode.inputs(self.input))
-            self.input.value = np.array(['42'])
+                                 inputs=vector.OpNode.inputs(self.source_node))
+            self.source_node.value = np.array(['42'])
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = vector.OpNode(op=IntOutputTypeOperation(),
-                                 inputs=vector.OpNode.inputs(self.input))
-            self.input.value = np.array([42])
+                                 inputs=vector.OpNode.inputs(self.source_node))
+            self.source_node.value = np.array([42])
             node._evaluate()
 
     def test_enabled_and_wrong_output_type(self):
@@ -334,12 +334,12 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
             with assert_raises(TypeError) as exc:
                 node = vector.OpNode(name='node',
                                      op=IntOutputTypeOperation(),
-                                     inputs=vector.OpNode.inputs(self.input))
-                self.input.value = np.array(['42'])
+                                     inputs=vector.OpNode.inputs(self.source_node))
+                self.source_node.value = np.array(['42'])
                 node._evaluate()
             # The name of the NumPy string type is 'string_' in Python 2 but
             # 'str_' in Python 3.
-            str_type_name = self.input.value.dtype.type.__name__
+            str_type_name = self.source_node.value.dtype.type.__name__
             expected = ("The output value type '{str}' for [node]\n"
                         "doesn't match the expected type ['int', "
                         '\'integer\'] for operation "int_operation".'

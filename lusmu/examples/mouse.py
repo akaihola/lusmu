@@ -6,12 +6,13 @@ On the screen there's a circle with a fixed center and radius.  Mouse clicks
 inside and outside the circle to change its color.
 
 On click (and drag), mouse coordinates are fed into the ``mousex`` and
-``mousey`` input nodes.  The ``distance`` node takes those coordinates as
-inputs and outputs the distance to the center of the circle.  The result is fed
-into the ``is_close`` node, which outputs a ``True`` value for distances
-smaller than the circle radius.  The ``alert`` node returns a string whose
-value depends on that boolean value.  Finally, the circle changes its color
-based on the string in the ``alert`` node.
+``mousey`` source nodes.  The ``distance`` operation node takes those
+coordinates as inputs, and outputs the distance to the center of the circle.
+The result is fed into the ``is_close`` operation node, which outputs a
+``True`` value for distances smaller than the circle radius.  The ``alert``
+operation node returns a string whose value depends on that boolean value.
+Finally, the circle changes its color based on the string in the ``alert``
+node.
 
 You can also observe debug output on the console.  Note how the distance
 measurement is skipped if the coordinate inputs don't change.
@@ -22,7 +23,7 @@ nodes and connections on the screen.  The diagram is saved in ``mouse.gif``.
 """
 
 
-from lusmu.core import Input, OpNode, update_inputs
+from lusmu.core import SrcNode, OpNode, update_source_nodes
 from lusmu.visualization import visualize_graph
 import math
 import Tkinter
@@ -48,8 +49,8 @@ def get_distance_description(is_close):
     return "INSIDE" if is_close else "OUTSIDE"
 
 
-mousex = Input(name='mouse x')
-mousey = Input(name='mouse y')
+mousex = SrcNode(name='mouse x')
+mousey = SrcNode(name='mouse y')
 distance = OpNode(
     name='distance',
     op=get_distance,
@@ -65,8 +66,8 @@ alert = OpNode(
 
 
 def onclick(event):
-    update_inputs([(mousex, event.x),
-                   (mousey, event.y)])
+    update_source_nodes([(mousex, event.x),
+                         (mousey, event.y)])
     print 'distance.value == {:.1f}'.format(distance.value)
     print 'is_close.value == {!r}'.format(is_close.value)
     print 'alert.value == {!r}'.format(alert.value)

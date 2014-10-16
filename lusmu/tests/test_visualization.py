@@ -5,22 +5,22 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 """
 
-from lusmu.core import OpNode, Input
+from lusmu.core import OpNode, SrcNode
 from lusmu.visualization import collect_nodes
 
 
 def test_collect_nodes_huge_number_of_inputs():
-    """Assert that collect_nodes accepts a large number of input nodes
+    """Assert that collect_nodes accepts a large number of inputs
 
     Test that the recursion in :func:`collect_nodes` does not break with many
-    input nodes.
+    inputs.
 
     """
     nodes = []
     collected_nodes = set()
 
     for val in range(1000):
-        nodes.append(Input('input%d' % val))
+        nodes.append(SrcNode('input%d' % val))
     nodes.append(OpNode(inputs=OpNode.inputs(*nodes)))
 
     collect_nodes(collected_nodes, nodes[-1])

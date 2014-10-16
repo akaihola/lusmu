@@ -70,7 +70,7 @@ DIRTY = _DIRTY()
 
 
 class BaseNode(object):
-    """Base class for Inputs and operation nodes"""
+    """Base class for source and operation nodes"""
 
     _name_counters = defaultdict(int)
 
@@ -80,11 +80,11 @@ class BaseNode(object):
         self._dependents = set()
 
     def _connect(self, dependent):
-        """Set the given node as a dependent of this OpNode or Input
+        """Set the given node as a dependent of this OpNode or SrcNode
 
         Immediately paints the new dependent node dirty if this node has
         already been evaluated or if a value has already been set for this
-        Input.
+        source node.
 
         Connecting nodes always invalidates the triggered nodes cache.
 
@@ -96,11 +96,11 @@ class BaseNode(object):
             _TRIGGERED_CACHE.clear()
 
     def _disconnect(self, dependent):
-        """Remove given node from the set of dependents of this OpNode or Input
+        """Remove given node from the set of dependents of this OpNode or SrcNode
 
         Immediately paints the new dependent node dirty if this node has
         previously been evaluated or if a value has previously been set for
-        this Input.
+        this source node.
 
         Disconnecting nodes always invalidates the triggered nodes cache.
 
@@ -112,7 +112,7 @@ class BaseNode(object):
             _TRIGGERED_CACHE.clear()
 
     def _set_value(self, value, get_triggered=True):
-        """Set a new value for this OpNode or Input
+        """Set a new value for this OpNode or SrcNode
 
         If this caused the value to change, paints dependent nodes dirty and
         returns the set of those dependent nodes which are marked "triggered"
@@ -154,11 +154,11 @@ class BaseNode(object):
         """Return the set of triggered dependent nodes
 
         The set includes nodes which are marked as triggered and are included
-        in the dependent chain from this OpNode or Input.
+        in the dependent chain from this OpNode or SrcNode.
 
-        The result is cached for the OpNode or Input if ``make_cache == True``,
+        The result is cached for the OpNode or SrcNode if ``make_cache == True``,
         but caching is suppressed for recursively walked dependent nodes.  This
-        way we only use cache memory only for OpNodes and Inputs whose
+        way we only use cache memory only for operation and source nodes whose
         triggered dependents are queried from external code.
 
         """
@@ -184,7 +184,7 @@ class BaseNode(object):
             dependent._set_value(DIRTY, get_triggered=False)
 
     def _generate_name(self):
-        """Generate a unique name for this OpNode or Input object
+        """Generate a unique name for this OpNode or SrcNode object
 
         The name includes:
 
@@ -206,34 +206,34 @@ class BaseNode(object):
                 .format(self=self))
 
 
-class Input(BaseNode):
-    """The input node class for reactive programming
+class SrcNode(BaseNode):
+    """The source node class for reactive programming
 
     Constructor arguments
     ---------------------
 
     name (optional): string
-            The internal name of the Input. Used in the
+            The internal name of the source node. Used in the
             ``__repr__`` of the object. If omitted, a name is
             automatically generated.
 
     value (optional):
-            The initial value for the Input.
+            The initial value for the source node.
 
-    Examples of Inputs::
+    Examples of source nodes::
 
-        >>> input_1 = Input()  # no name, no default value
-        >>> input_2 = Input(value=10.0)  # input with a default value
-        >>> exponent = Input(name='exponent')  # named input
-        >>> sensor = Input(name='sensor', value=-5.3)  # named, with default
+        >>> source_1 = SrcNode()  # no name, no default value
+        >>> source_2 = SrcNode(value=10.0)  # with a default value
+        >>> exponent = SrcNode(name='exponent')  # named source node
+        >>> sensor = SrcNode(name='sensor', value=-5.3)  # named, with default
 
     """
     def get_value(self):
-        """Return the value of the Input"""
+        """Return the value of the source node"""
         return self._value
 
     def set_value(self, new_value):
-        """Set a new value for an Input
+        """Set a new value for an source node
 
         If this caused the value to change, paints dependent nodes dirty and
         returns the set of those dependent nodes which are marked "triggered"
@@ -261,25 +261,25 @@ class OpNode(BaseNode):
             Values from inputs are provided in positional and keyword arguments
             as defined in the ``inputs=`` argument.
 
-    inputs (optional): ((Input/OpNode, ...), {key: Input/OpNode, ...})
-            The OpNodes and Inputs whose values are used as inputs for the
-            operation.  This argument can be created with ``OpNode.inputs()``
-            which provides a cleaner syntax.
+    inputs (optional): ((SrcNode/OpNode, ...), {key: SrcNode/OpNode, ...})
+            The nodes whose values are used as inputs for
+            the operation. This argument can be created with
+            ``OpNode.inputs()`` which provides a cleaner syntax.
 
     triggered: boolean (default=False)
             ``True`` is this OpNode shoud be automatically evaluated when any
-            OpNode or Input it depends on change value
+            OpNode or SrcNode it depends on change value
 
     Examples of operation nodes::
 
-        >>> input_1, input_2, exponent = [Input() for i in range(3)]
+        >>> source_1, source_2, exponent = [SrcNode() for i in range(3)]
         >>> # sum OpNode with two positional inputs
         >>> sum_node = OpNode(op=lambda *args: sum(args),
-        ...                   inputs=OpNode.inputs(input_1, input_2))
+        ...                   inputs=OpNode.inputs(source_1, source_2))
         >>> # triggered (auto-calculated) OpNode with two keyword inputs
         >>> triggered_node = OpNode(
         ...     op=lambda a, x: a ** x,
-        ...     inputs=OpNode.inputs(a=input_1, x=exponent),
+        ...     inputs=OpNode.inputs(a=source_1, x=exponent),
         ...     triggered=True)
 
     """
@@ -328,7 +328,7 @@ class OpNode(BaseNode):
 
         Allows writing this::
 
-            >>> inputs = [Input() for i in range(4)]
+            >>> inputs = [SrcNode() for i in range(4)]
             >>> node = OpNode(inputs=OpNode.inputs(
             ...     inputs[0], inputs[1],
             ...     kw1=inputs[2], kw2=inputs[3]))
@@ -390,7 +390,7 @@ class OpNode(BaseNode):
         return self._value
 
     def set_value(self, new_value):
-        """Set a new value for an Input
+        """Set a new value for an operation node
 
         If this caused the value to change, paints dependent nodes dirty and
         returns the set of those dependent nodes which are marked "triggered"
@@ -432,37 +432,37 @@ class OpNode(BaseNode):
         return self.name < other.name
 
 
-def update_inputs_iter(inputs_and_values):
-    """Update values of multiple Inputs and trigger dependent nodes
+def update_source_nodes_iter(nodes_and_values):
+    """Update values of multiple source nodes and trigger dependent nodes
 
     This is a generator which iterates through the set of triggered dependent
     nodes.
 
     """
     triggered = set()
-    for node, new_value in inputs_and_values:
+    for node, new_value in nodes_and_values:
         triggered |= node._set_value(new_value)
     for node in triggered:
         node.get_value()  # trigger evaluation
         yield node
 
 
-def update_inputs(inputs_and_values):
-    """Update values of multiple Inputs and trigger dependents
+def update_source_nodes(nodes_and_values):
+    """Update values of multiple source nodes and trigger dependent nodes
 
-    Use this variant of the ``update_inputs*`` functions if you don't need to
-    access the set of triggered dependent nodes.
+    Use this variant of the ``update_source_nodes*`` functions if you don't
+    need to access the set of triggered dependent nodes.
 
     """
-    for _node in update_inputs_iter(inputs_and_values):
+    for _node in update_source_nodes_iter(nodes_and_values):
         pass
 
 
-def update_inputs_get_triggered(inputs_and_values):
-    """Update values of multiple Inputs and trigger dependents
+def update_source_nodes_get_triggered(nodes_and_values):
+    """Update values of multiple source nodes and trigger dependent nodes
 
-    This variant of the ``update_inputs*`` functions returns triggered
+    This variant of the ``update_source_nodes*`` functions returns triggered
     dependent nodes as a Python set.
 
     """
-    return set(update_inputs_iter(inputs_and_values))
+    return set(update_source_nodes_iter(nodes_and_values))

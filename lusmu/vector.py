@@ -8,16 +8,16 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 """
 
 # pylint: disable=W0611
-#         update_inputs is provided as a convenience for importing it from the
-#         same place as the Input and OpNode classes
+#         update_source_nodes is provided as a convenience for importing it from the
+#         same place as the SrcNode and OpNode classes
 # pylint: disable=R0903
 #         mixins have few public methods, that's ok
 
 import logging
 from lusmu.core import (DIRTY,
-                        Input as LusmuInput,
+                        SrcNode as LusmuSrcNode,
                         OpNode as LusmuOpNode,
-                        update_inputs)
+                        update_source_nodes)
 import numexpr as ne
 import numpy as np
 import pandas as pd
@@ -47,9 +47,9 @@ def vector_eq(a, b):
 
 
 class VectorEquality(object):
-    """Mixin to extend Lusmu Inputs and OpNodes to work with vector values"""
+    """Mixin to extend Lusmu SrcNodes and OpNodes to work with vector values"""
     def _value_eq(self, other_value):
-        """Replace the equality test of Input/OpNode values
+        """Replace the equality test of SrcNode/OpNode values
 
         Lusmu uses the ``==`` operator by default.  It doesn't work correctly
         with vectors which have more than one value – ``bool(vec1 == vec2)``
@@ -94,16 +94,16 @@ class NodePickleMixin(object):
                 for key in self._state_attributes}
 
 
-class Input(NodePickleMixin, VectorEquality, LusmuInput):
-    """Vector compatible Lusmu Input
+class SrcNode(NodePickleMixin, VectorEquality, LusmuSrcNode):
+    """Vector compatible Lusmu source node
 
-    The value of the input node is always set dirty when unpickling.
+    The value of the source node is always set dirty when unpickling.
 
     """
     _state_attributes = NodePickleMixin._state_attributes + ('last_timestamp',)
 
     def __init__(self, name=None, value=DIRTY):
-        super(Input, self).__init__(name=name, value=value)
+        super(SrcNode, self).__init__(name=name, value=value)
         self.last_timestamp = self._get_max_timestamp(value)
 
     @staticmethod
@@ -123,7 +123,7 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
         new_last_timestamp = self._get_max_timestamp(value)
         if new_last_timestamp:
             self.last_timestamp = new_last_timestamp
-        return super(Input, self)._set_value(value,
+        return super(SrcNode, self)._set_value(value,
                                              get_triggered=get_triggered)
 
     def __eq__(self, other):
@@ -132,7 +132,7 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
 
     # In Python 3, the __hash__ method needs to be defined when __eq__ is
     # defined:
-    __hash__ = LusmuInput.__hash__
+    __hash__ = LusmuSrcNode.__hash__
 
 
 class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):

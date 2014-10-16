@@ -14,7 +14,7 @@ from __future__ import print_function, unicode_literals
 import re
 from textwrap import dedent
 
-from lusmu.core import Input, OpNode
+from lusmu.core import SrcNode, OpNode
 import subprocess
 
 
@@ -44,7 +44,7 @@ def get_operation_name(operation):
 
 
 def format_node_default(node_id, node):
-    shape = 'oval' if isinstance(node, Input) else 'box'
+    shape = 'oval' if isinstance(node, SrcNode) else 'box'
     operation = ('{br}{br}<FONT COLOR="#888888">{operation}</FONT>'
                  .format(br=' <BR ALIGN="LEFT"/>',
                          operation=get_operation_name(node._operation))
@@ -68,13 +68,13 @@ def graphviz_lines(nodes, node_filter, format_node):
     if node_filter:
         all_nodes = [n for n in all_nodes if node_filter(n)]
     all_nodes = sorted(all_nodes, key=id)
-    input_nodes = [n for n in all_nodes if isinstance(n, Input)]
+    source_nodes = [n for n in all_nodes if isinstance(n, SrcNode)]
 
     yield 'digraph gr {'
     yield '  graph [ dpi = 48 ];'
     yield '  rankdir = LR;'
     yield '  { rank = source;'
-    for node in input_nodes:
+    for node in source_nodes:
         yield '    n{};'.format(id(node))
     yield '  }'
     for node in all_nodes:

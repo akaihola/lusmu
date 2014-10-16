@@ -4,12 +4,12 @@ Home automation example
 This is an example of using reactive programming and the Lusmu library
 in a home automation setting.
 
-First, import the Lusmu :class:`~lusmu.core.Input`
+First, import the Lusmu :class:`~lusmu.core.SrcNode`
 and :class:`~lusmu.core.OpNode` classes,
-the :func:`~lusmu.core.update_inputs` function for inserting input values
+the :func:`~lusmu.core.update_source_nodes` function for inserting input values
 and the Python :mod:`math` package::
 
-    from lusmu.core import Input, OpNode, update_inputs
+    from lusmu.core import SrcNode, OpNode, update_source_nodes
     import math
 
 Them define the operation functions
@@ -48,8 +48,8 @@ and a lower limit of 20.0 degrees is used to switch the heater off:
 
 ::
 
-    temperature_1 = Input()
-    temperature_2 = Input()
+    temperature_1 = SrcNode()
+    temperature_2 = SrcNode()
     temperature_avg = OpNode(op=avg,
                              inputs=OpNode.inputs(temperature_1, temperature_2))
     temperature_threshold = OpNode(op=lambda temperature: temperature > 20.0,
@@ -77,8 +77,8 @@ The lights are adjusted according to brightness sensors in the windows:
 
 ::
 
-    brightness_1 = Input()
-    brightness_2 = Input()
+    brightness_1 = SrcNode()
+    brightness_2 = SrcNode()
     brightness_sum = OpNode(op=sum_,
                             inputs=OpNode.inputs(brightness_1, brightness_2))
     brightness_inverse = OpNode(op=inverse(510),
@@ -103,7 +103,7 @@ the relative humidity is calculated:
  
 ::
 
-    humidity = Input()
+    humidity = SrcNode()
     humidity_normalized = OpNode(op=lambda sensor_value: 100.0 * (1.0 - math.log(sensor_value, 255)),
                                  inputs=OpNode.inputs(humidity))
 
@@ -117,14 +117,14 @@ without triggering lazy evaluation::
     >>> temperature_avg._value
     <lusmu.core.DIRTY>
 
-Values are fed into input nodes
-using the :func:`~lusmu.core.update_inputs` function::
+Values are fed into source nodes
+using the :func:`~lusmu.core.update_source_nodes` function::
 
-    >>> update_inputs([(temperature_1, 25.0),
-    ...                (temperature_2, 22.5),
-    ...                (brightness_1, 100),
-    ...                (brightness_2, 110),
-    ...                (humidity, 50)])
+    >>> update_source_nodes([(temperature_1, 25.0),
+    ...                      (temperature_2, 22.5),
+    ...                      (brightness_1, 100),
+    ...                      (brightness_2, 110),
+    ...                      (humidity, 50)])
     Heater off
     Lamp power 300.0
 
@@ -143,7 +143,7 @@ On the other hand, the relative humidity value is not auto-calculated::
     >>> humidity_normalized._value
     <lusmu.core.DIRTY>
 
-The dependency path from the input node to the requested humidity value
+The dependency path from the source node to the requested humidity value
 is only evaluated when needed.
 The :attr:`lusmu.core.OpNode.value` property triggers evaluation::
 
@@ -152,12 +152,12 @@ The :attr:`lusmu.core.OpNode.value` property triggers evaluation::
 
 Unchanged values don't trigger evaluation:
 
-    >>> update_inputs([(temperature_1, 25.0),
-    ...                (temperature_2, 22.5)})
+    >>> update_source_nodes([(temperature_1, 25.0),
+    ...                      (temperature_2, 22.5)})
 
 Changing the values does::
 
-    >>> update_inputs([(temperature_1, 21.0),
-    ...                (temperature_2, 18.5)])
+    >>> update_source_nodes([(temperature_1, 21.0),
+    ...                      (temperature_2, 18.5)])
     Heater on
     Lamp power 405.00

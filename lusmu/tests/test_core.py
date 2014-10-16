@@ -18,8 +18,8 @@ from nose.tools import assert_raises
 import numpy as np
 from lusmu.core import (OpNode,
                         DIRTY,
-                        Input,
-                        update_inputs_get_triggered,
+                        SrcNode,
+                        update_source_nodes_get_triggered,
                         _TRIGGERED_CACHE)
 from mock import patch
 import weakref
@@ -51,10 +51,10 @@ class OpNodeTestCase(TestCase):
 
     def test_default_name(self):
         """A default name is generated for a node if the name is omitted"""
-        class AutoNamedInput(Input):
+        class AutoNamedSrcNode(SrcNode):
             """OpNode subclass for testing automatic names"""
 
-        self.assertEqual('AutoNamedInput-1', AutoNamedInput().name)
+        self.assertEqual('AutoNamedSrcNode-1', AutoNamedSrcNode().name)
 
     def test_default_name_with_operation(self):
         """The default name of a node includes operation func_name if available"""
@@ -69,12 +69,12 @@ class OpNodeTestCase(TestCase):
 
     def test_node_classes_have_separate_counters(self):
         """All node classes have separate counters for auto-generated names"""
-        class CounterNodeA(Input):
+        class CounterNodeA(SrcNode):
             """Node subclass for testing"""
 
         self.assertEqual('CounterNodeA-1', CounterNodeA().name)
 
-        class CounterNodeB(Input):
+        class CounterNodeB(SrcNode):
             """Node subclass for testing"""
 
         class CounterNodeC(OpNode):
@@ -107,20 +107,20 @@ class OpNodeTestCase(TestCase):
         self.assertEqual({leaf}, root3._dependents)
 
     def test_initial_value(self):
-        """The initial value of an Input can be set in the constructor"""
-        node = Input(value=5)
+        """The initial value of a source node can be set in the constructor"""
+        node = SrcNode(value=5)
         self.assertEqual(5, node._value)
 
     def test_value_property_setter(self):
         """The value of a node can be set with the .value property"""
-        root = Input()
+        root = SrcNode()
         leaf = OpNode(op=lambda value: value, inputs=OpNode.inputs(root))
         root.value = 5
         self.assertEqual(5, leaf.get_value())
 
     def test_value_property_getter(self):
         """The value of a node can be set with the .value property"""
-        root = Input(value=5)
+        root = SrcNode(value=5)
         leaf = OpNode(op=lambda value: value, inputs=OpNode.inputs(root))
         self.assertEqual(5, leaf.value)
 
@@ -128,34 +128,34 @@ class OpNodeTestCase(TestCase):
 class BaseNodeGarbageCollectionTestCase(TestCase):
     """These tests show that nodes are garbage collected
 
-    There is thus no need to use weakrefs when Inputs and OpNodes refer to each
-    other as dependent nodes or input nodes.
+    There is thus no need to use weakrefs when SrcNodes and OpNodes refer to
+    each other as dependent nodes or inputs.
 
     """
     def test_garbage_collection(self):
         """Interconnected nodes are garbage collected"""
-        input_node = Input()
-        output_node = OpNode(op=lambda value: value,
-                             inputs=OpNode.inputs(input_node))
-        self.assertEqual(set([output_node]), input_node._dependents)
-        self.assertEqual((input_node,), output_node._positional_inputs)
-        input_ref = weakref.ref(input_node)
-        output_ref = weakref.ref(output_node)
-        del input_node
-        del output_node
+        source_node = SrcNode()
+        operation_node = OpNode(op=lambda value: value,
+                                inputs=OpNode.inputs(source_node))
+        self.assertEqual(set([operation_node]), source_node._dependents)
+        self.assertEqual((source_node,), operation_node._positional_inputs)
+        source_ref = weakref.ref(source_node)
+        operation_ref = weakref.ref(operation_node)
+        del source_node
+        del operation_node
         gc.collect()
-        self.assertEqual(None, input_ref())
-        self.assertEqual(None, output_ref())
+        self.assertEqual(None, source_ref())
+        self.assertEqual(None, operation_ref())
 
     def test_scope_garbage_collection(self):
         """Interconnected nodes which out of scope are garbage collected"""
         def inner():
-            input_node = Input()
-            output_node = OpNode(op=lambda value: value,
-                                 inputs=OpNode.inputs(input_node))
-            self.assertEqual(set([output_node]), input_node._dependents)
-            self.assertEqual((input_node,), output_node._positional_inputs)
-            return weakref.ref(input_node), weakref.ref(output_node)
+            source_node = SrcNode()
+            operation_node = OpNode(op=lambda value: value,
+                                    inputs=OpNode.inputs(source_node))
+            self.assertEqual(set([operation_node]), source_node._dependents)
+            self.assertEqual((source_node,), operation_node._positional_inputs)
+            return weakref.ref(source_node), weakref.ref(operation_node)
 
         input_ref, output_ref = inner()
         gc.collect()
@@ -169,26 +169,26 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
                 pass
 
         val = Val()
-        input_node = Input(value=val)
-        output_node = OpNode(op=lambda value: value,
-                              inputs=OpNode.inputs(input_node))
-        self.assertEqual(set([output_node]), input_node._dependents)
-        self.assertEqual((input_node,), output_node._positional_inputs)
-        self.assertEqual(val, input_node._value)
-        input_ref = weakref.ref(input_node)
-        output_ref = weakref.ref(output_node)
-        del input_node
-        del output_node
+        source_node = SrcNode(value=val)
+        operation_node = OpNode(op=lambda value: value,
+                                inputs=OpNode.inputs(source_node))
+        self.assertEqual(set([operation_node]), source_node._dependents)
+        self.assertEqual((source_node,), operation_node._positional_inputs)
+        self.assertEqual(val, source_node._value)
+        source_ref = weakref.ref(source_node)
+        operation_ref = weakref.ref(operation_node)
+        del source_node
+        del operation_node
         gc.collect()
-        self.assertEqual(None, input_ref())
-        self.assertEqual(None, output_ref())
+        self.assertEqual(None, source_ref())
+        self.assertEqual(None, operation_ref())
 
 
 class NodeDependentTestCase(TestCase):
     """Test case for triggered dependent nodes"""
 
     def setUp(self):
-        self.root = Input('root')
+        self.root = SrcNode('root')
         self.dependent = ConstantNode('dependent', triggered=False)
         self.root._connect(self.dependent)
         self.triggered = ConstantNode('triggered', triggered=True)
@@ -205,7 +205,7 @@ class NodeDependentTestCase(TestCase):
         self.assertEqual({self.triggered}, triggered_nodes)
 
     def test_set_value_triggers_dependents(self):
-        """Setting the previous value to an Input doesn't trigger dependents"""
+        """Re-assigning SrcNode's current value doesn't trigger dependents"""
         self.root.set_value(0)
         triggered_nodes = self.root.set_value(0)
         self.assertEqual(set(), triggered_nodes)
@@ -242,7 +242,7 @@ class CountingNode(Counting, ConstantNode):
     pass
 
 
-class CountingInput(Counting, Input):
+class CountingSrcNode(Counting, SrcNode):
     pass
 
 
@@ -250,7 +250,7 @@ class TriggeredCacheTestCase(TestCase):
     """Test case for the cache of triggered nodes"""
 
     def setUp(self):
-        self.root = CountingInput('root')
+        self.root = CountingSrcNode('root')
         self.branch = CountingNode('branch', triggered=True)
         self.leaf1 = CountingNode('leaf1', triggered=True)
         self.leaf2 = CountingNode('leaf2', triggered=True)
@@ -287,20 +287,20 @@ class TriggeredCacheTestCase(TestCase):
 
 
 class NodeSetValueTestCase(TestCase):
-    """Test case for Input.set_value()"""
+    """Test case for SrcNode.set_value()"""
 
     def test_set_value(self):
         """A value set to a dirty node is stored in the object"""
-        node = Input('name')
+        node = SrcNode('name')
         node.set_value(0)
         self.assertEqual(0, node._value)
 
 
 class UpdateNodesTestCase(TestCase):
-    """Test case for update_inputs*() methods"""
+    """Test case for update_source_nodes*() methods"""
 
     def setUp(self):
-        self.root = CountingInput('root')
+        self.root = CountingSrcNode('root')
         self.branch1 = CountingNode('branch1', triggered=True)
         self.branch2 = CountingNode('branch2', triggered=True)
         self.leaf1 = CountingNode('leaf1', triggered=True)
@@ -316,12 +316,12 @@ class UpdateNodesTestCase(TestCase):
 
     def test_only_leafs_triggered_1(self):
         """Updating a node only triggers its descendents"""
-        triggered = update_inputs_get_triggered([(self.branch1, 2)])
+        triggered = update_source_nodes_get_triggered([(self.branch1, 2)])
         self.assertEqual({self.leaf1, self.leaf2}, triggered)
 
     def test_only_leafs_triggered_2(self):
         """Updating a node only triggers its descendents"""
-        triggered = update_inputs_get_triggered([(self.branch2, 2)])
+        triggered = update_source_nodes_get_triggered([(self.branch2, 2)])
         self.assertEqual({self.leaf3, self.leaf4}, triggered)
 
 
@@ -330,10 +330,11 @@ class HomeAutomationTestCase(TestCase):
 
     def test_home_automation(self):
         """A simple example in the home automation domain"""
-        brightness_1 = Input()
-        brightness_2 = Input()
-        brightness_sum = OpNode(op=lambda *args: sum(args),
-                                inputs=OpNode.inputs(brightness_1, brightness_2))
+        brightness_1 = SrcNode()
+        brightness_2 = SrcNode()
+        brightness_sum = OpNode(
+            op=lambda *args: sum(args),
+            inputs=OpNode.inputs(brightness_1, brightness_2))
 
         def inverse(value):
             """Return the inverse of a value in the range 0..510"""
@@ -352,17 +353,17 @@ class HomeAutomationTestCase(TestCase):
                              inputs=OpNode.inputs(brightness_inverse),
                              triggered=True)
 
-        update_inputs_get_triggered([(brightness_1, 20),
+        update_source_nodes_get_triggered([(brightness_1, 20),
                                     (brightness_2, 40)])
 
         self.assertEqual([450], lamp_power_changes)
 
-        update_inputs_get_triggered([(brightness_1, 20),
+        update_source_nodes_get_triggered([(brightness_1, 20),
                                     (brightness_2, 40)])
 
         self.assertEqual([450], lamp_power_changes)
 
-        update_inputs_get_triggered([(brightness_1, 24),
+        update_source_nodes_get_triggered([(brightness_1, 24),
                                     (brightness_2, 40)])
 
         self.assertEqual([450, 446], lamp_power_changes)
@@ -390,51 +391,51 @@ class IntOutputTypeOperation(MockOperationBase):
 
 class NodeVerifyOutputTypeTestCase(TestCase):
     def setUp(self):
-        self.input = Input()
+        self.source_node = SrcNode()
 
     def test_disabled_and_no_output_type(self):
         node = OpNode(op=NoOutputTypeOperation(),
-                      inputs=OpNode.inputs(self.input))
-        self.input.value = '42'
+                      inputs=OpNode.inputs(self.source_node))
+        self.source_node.value = '42'
         node._evaluate()
 
     def test_disabled_and_none_output_type(self):
         node = OpNode(op=NoneOutputTypeOperation(),
-                      inputs=OpNode.inputs(self.input))
-        self.input.value = '42'
+                      inputs=OpNode.inputs(self.source_node))
+        self.source_node.value = '42'
         node._evaluate()
 
     def test_disabled_and_correct_output_type(self):
         node = OpNode(op=IntOutputTypeOperation(),
-                      inputs=OpNode.inputs(self.input))
-        self.input.value = 42
+                      inputs=OpNode.inputs(self.source_node))
+        self.source_node.value = 42
         node._evaluate()
 
     def test_disabled_and_wrong_output_type(self):
         node = OpNode(op=IntOutputTypeOperation(),
-                      inputs=OpNode.inputs(self.input))
-        self.input.value = '42'
+                      inputs=OpNode.inputs(self.source_node))
+        self.source_node.value = '42'
         node._evaluate()
 
     def test_enabled_and_no_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=NoOutputTypeOperation(),
-                          inputs=OpNode.inputs(self.input))
-            self.input.value = '42'
+                          inputs=OpNode.inputs(self.source_node))
+            self.source_node.value = '42'
             node._evaluate()
 
     def test_enabled_and_none_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=NoneOutputTypeOperation(),
-                          inputs=OpNode.inputs(self.input))
-            self.input.value = '42'
+                          inputs=OpNode.inputs(self.source_node))
+            self.source_node.value = '42'
             node._evaluate()
 
     def test_enabled_and_correct_output_type(self):
         with patch('lusmu.core.VERIFY_OUTPUT_TYPES', True):
             node = OpNode(op=IntOutputTypeOperation(),
-                          inputs=OpNode.inputs(self.input))
-            self.input.value = 42
+                          inputs=OpNode.inputs(self.source_node))
+            self.source_node.value = 42
             node._evaluate()
 
     def test_enabled_and_wrong_output_type(self):
@@ -442,8 +443,8 @@ class NodeVerifyOutputTypeTestCase(TestCase):
             with assert_raises(TypeError) as exc:
                 node = OpNode(name='node',
                               op=IntOutputTypeOperation(),
-                              inputs=OpNode.inputs(self.input))
-                self.input.value = '42'
+                              inputs=OpNode.inputs(self.source_node))
+                self.source_node.value = '42'
                 node._evaluate()
             self.assertEqual(
                 "The output value type 'str' for [node]\n"
