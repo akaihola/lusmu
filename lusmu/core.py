@@ -128,7 +128,7 @@ class BaseNode(object):
 
         """
         # test if neither, one of or both the old and the new value are DIRTY
-        dirty_count = len([v for v in value, self._value if v is DIRTY])
+        dirty_count = len([v for v in (value, self._value) if v is DIRTY])
         if dirty_count == 2:
             # both DIRTY, no need to touch anything
             return set()
@@ -360,12 +360,16 @@ class Node(BaseNode):
 
         """
         if not isinstance(value, self._action.output_type):
+            output_type = self._action.output_type
+            output_type_name = ([v.__name__ for v in output_type]
+                                if isinstance(output_type, tuple)
+                                else output_type.__name__)
             raise TypeError(
-                "The output value type {value_type!r} for [{self.name}]\n"
-                "doesn't match the expected type "
-                '{self._action.output_type.__name__!r} for action '
+                "The output value type {value.__class__.__name__!r} "
+                "for [{self.name}]\n"
+                "doesn't match the expected type {output_type} for action "
                 '"{self._action.name}".'
-                .format(value_type=type(value).__name__, self=self))
+                .format(value=value, output_type=output_type_name, self=self))
 
     def set_inputs(self, *args, **kwargs):
         """Replace current positional and keyword inputs"""

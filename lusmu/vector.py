@@ -129,6 +129,10 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
         """Equality comparison provided for unit test convenience"""
         return self.name == other.name and self._value_eq(other.value)
 
+    # In Python 3, the __hash__ method needs to be defined when __eq__ is
+    # defined:
+    __hash__ = LusmuInput.__hash__
+
 
 class Node(NodePickleMixin, VectorEquality, LusmuNode):
     """Vector compatible Lusmu Node"""
@@ -146,13 +150,20 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
         """
         if hasattr(value, 'dtype'):
             if not issubclass(value.dtype.type, self._action.output_type):
+                output_type = self._action.output_type
+                output_type_name = ([v.__name__ for v in output_type]
+                                    if isinstance(output_type, tuple)
+                                    else output_type.__name__)
+
                 raise TypeError(
                     "The output value type {value.dtype.type.__name__!r} "
                     "for [{self.name}]\n"
                     "doesn't match the expected type "
-                    "{self._action.output_type.__name__!r} for action "
+                    "{output_type_name} for action "
                     '"{self._action.name}".'
-                    .format(value=value, self=self))
+                    .format(output_type_name=output_type_name,
+                            value=value,
+                            self=self))
         else:
             super(Node, self)._verify_output_type(value)
 
@@ -167,3 +178,7 @@ class Node(NodePickleMixin, VectorEquality, LusmuNode):
     def __eq__(self, other):
         """Equality comparison provided for unit test convenience"""
         return self.__dict__ == other.__dict__
+
+    # In Python 3, the __hash__ method needs to be defined when __eq__ is
+    # defined:
+    __hash__ = LusmuNode.__hash__

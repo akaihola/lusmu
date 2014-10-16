@@ -19,7 +19,7 @@ def test_collect_nodes_huge_number_of_inputs():
     nodes = []
     collected_nodes = set()
 
-    for val in xrange(1000):
+    for val in range(1000):
         nodes.append(Input('input%d' % val))
     nodes.append(Node(inputs=Node.inputs(*nodes)))
 

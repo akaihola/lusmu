@@ -337,7 +337,11 @@ class VectorNodeVerifyOutputTypeTestCase(TestCase):
                                    inputs=vector.Node.inputs(self.input))
                 self.input.value = np.array(['42'])
                 node._evaluate()
-            self.assertEqual(
-                "The output value type 'string_' for [node]\n"
-                "doesn't match the expected type 'int' for action "
-                '"int_action".', str(exc.exception))
+            # The name of the NumPy string type is 'string_' in Python 2 but
+            # 'str_' in Python 3.
+            str_type_name = self.input.value.dtype.type.__name__
+            expected = ("The output value type '{str}' for [node]\n"
+                        "doesn't match the expected type ['int', "
+                        '\'integer\'] for action "int_action".'
+                        .format(str=str_type_name))
+            self.assertEqual(expected, str(exc.exception))

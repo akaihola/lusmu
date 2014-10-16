@@ -15,6 +15,7 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 import gc
 from unittest import TestCase
 from nose.tools import assert_raises
+import numpy as np
 from lusmu.core import (Node,
                         DIRTY,
                         Input,
@@ -384,7 +385,7 @@ class NoneOutputTypeAction(MockActionBase):
 
 class IntOutputTypeAction(MockActionBase):
     name = 'int_action'
-    output_type = int
+    output_type = int, np.integer
 
 
 class NodeVerifyOutputTypeTestCase(TestCase):
@@ -446,5 +447,5 @@ class NodeVerifyOutputTypeTestCase(TestCase):
                 node._evaluate()
             self.assertEqual(
                 "The output value type 'str' for [node]\n"
-                "doesn't match the expected type 'int' for action "
-                '"int_action".', str(exc.exception))
+                "doesn't match the expected type ['int', 'integer'] "
+                'for action "int_action".', str(exc.exception))
