@@ -47,7 +47,7 @@ def vector_eq(a, b):
 
 
 class VectorEquality(object):
-    """Mixin for extending Lusmu Inputs and Nodes to work with vector values"""
+    """Mixin to extend Lusmu Inputs and OpNodes to work with vector values"""
     def _value_eq(self, other_value):
         """Replace the equality test of Input/OpNode values
 
@@ -135,7 +135,7 @@ class Input(NodePickleMixin, VectorEquality, LusmuInput):
 
 
 class OpNode(NodePickleMixin, VectorEquality, LusmuOpNode):
-    """Vector compatible Lusmu Node"""
+    """Vector compatible Lusmu operation node"""
     _state_attributes = (NodePickleMixin._state_attributes +
                          ('_action',
                           'triggered',

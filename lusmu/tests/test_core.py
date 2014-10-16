@@ -26,17 +26,17 @@ import weakref
 
 
 class IncompleteNode(OpNode):
-    """A Node subclass which doesn't implement ._evaluate()"""
+    """An operation node subclass which doesn't implement ._evaluate()"""
     pass
 
 
 class ConstantNode(OpNode):
-    """A Node subclass which always evaluates to the value 1"""
+    """An operation node subclass which always evaluates to the value 1"""
     def _evaluate(self):
         return 1
 
 
-class NodeTestCase(TestCase):
+class OpNodeTestCase(TestCase):
     """Test case for basic functionality of the OpNode class"""
 
     def test_missing_evaluate(self):
@@ -68,7 +68,7 @@ class NodeTestCase(TestCase):
         self.assertEqual('NamedNode-my_action-1', node.name)
 
     def test_node_classes_have_separate_counters(self):
-        """All Node classes have separate counters for auto-generated names"""
+        """All node classes have separate counters for auto-generated names"""
         class CounterNodeA(Input):
             """Node subclass for testing"""
 
@@ -95,7 +95,7 @@ class NodeTestCase(TestCase):
         self.assertEqual({'branch': branch}, leaf._keyword_inputs)
 
     def test_changing_inputs_disconnects_dependencies(self):
-        """Old dependencies are disconnected when changing inputs of a Node"""
+        """Old dependencies are disconnected when changing inputs of a node"""
         root1 = ConstantNode('root1')
         leaf = ConstantNode('leaf', inputs=([root1], {}))
         self.assertEqual({leaf}, root1._dependents)
@@ -112,14 +112,14 @@ class NodeTestCase(TestCase):
         self.assertEqual(5, node._value)
 
     def test_value_property_setter(self):
-        """The value of a Node can be set with the .value property"""
+        """The value of a node can be set with the .value property"""
         root = Input()
         leaf = OpNode(action=lambda value: value, inputs=OpNode.inputs(root))
         root.value = 5
         self.assertEqual(5, leaf.get_value())
 
     def test_value_property_getter(self):
-        """The value of a Node can be set with the .value property"""
+        """The value of a node can be set with the .value property"""
         root = Input(value=5)
         leaf = OpNode(action=lambda value: value, inputs=OpNode.inputs(root))
         self.assertEqual(5, leaf.value)
@@ -128,7 +128,7 @@ class NodeTestCase(TestCase):
 class BaseNodeGarbageCollectionTestCase(TestCase):
     """These tests show that nodes are garbage collected
 
-    There is thus no need to use weakrefs when Inputs and Nodes refer to each
+    There is thus no need to use weakrefs when Inputs and OpNodes refer to each
     other as dependent nodes or input nodes.
 
     """
@@ -185,7 +185,7 @@ class BaseNodeGarbageCollectionTestCase(TestCase):
 
 
 class NodeDependentTestCase(TestCase):
-    """Test case for triggered dependent Nodes"""
+    """Test case for triggered dependent nodes"""
 
     def setUp(self):
         self.root = Input('root')
@@ -195,12 +195,12 @@ class NodeDependentTestCase(TestCase):
         self.root._connect(self.triggered)
 
     def test_keep_dirty(self):
-        """Setting a dirty Node as dirty doesn't trigger dependents"""
+        """Setting a dirty node as dirty doesn't trigger dependents"""
         triggered_nodes = self.root.set_value(DIRTY)
         self.assertEqual(set(), triggered_nodes)
 
     def test_set_value_triggers_dependents(self):
-        """Setting a value to a dirty Node triggers dependents"""
+        """Setting a value to a dirty node triggers dependents"""
         triggered_nodes = self.root.set_value(0)
         self.assertEqual({self.triggered}, triggered_nodes)
 
@@ -211,12 +211,12 @@ class NodeDependentTestCase(TestCase):
         self.assertEqual(set(), triggered_nodes)
 
     def test_get_triggered_dependents(self):
-        """Setting a value to a dirty Node triggers dependents"""
+        """Setting a value to a dirty node triggers dependents"""
         triggered_nodes = self.root._get_triggered_dependents()
         self.assertEqual({self.triggered}, triggered_nodes)
 
     def test_get_deep_triggered_dependents(self):
-        """Setting a value to a dirty Node triggers dependents tree"""
+        """Setting a value to a dirty node triggers dependents tree"""
         child1 = ConstantNode('child1', triggered=True)
         child2 = ConstantNode('child2', triggered=True)
         self.triggered._connect(child1)
@@ -287,10 +287,10 @@ class TriggeredCacheTestCase(TestCase):
 
 
 class NodeSetValueTestCase(TestCase):
-    """Test case for Node.set_value()"""
+    """Test case for Input.set_value()"""
 
     def test_set_value(self):
-        """A value set to a dirty Node is stored in the object"""
+        """A value set to a dirty node is stored in the object"""
         node = Input('name')
         node.set_value(0)
         self.assertEqual(0, node._value)
@@ -315,12 +315,12 @@ class UpdateNodesTestCase(TestCase):
         self.leaf3._connect(self.leaf4)
 
     def test_only_leafs_triggered_1(self):
-        """Updating a Node only triggers its descendents"""
+        """Updating a node only triggers its descendents"""
         triggered = update_inputs_get_triggered([(self.branch1, 2)])
         self.assertEqual({self.leaf1, self.leaf2}, triggered)
 
     def test_only_leafs_triggered_2(self):
-        """Updating a Node only triggers its descendents"""
+        """Updating a node only triggers its descendents"""
         triggered = update_inputs_get_triggered([(self.branch2, 2)])
         self.assertEqual({self.leaf3, self.leaf4}, triggered)
 

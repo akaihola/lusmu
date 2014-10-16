@@ -21,7 +21,7 @@ import subprocess
 def collect_nodes(collected_nodes, *args):
     """Collect all nodes belonging to the same graph
 
-    Walks dependent Nodes and inputs recursively.
+    Walks dependent nodes and inputs recursively.
 
     """
     for node in args:
