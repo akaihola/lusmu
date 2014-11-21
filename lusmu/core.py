@@ -312,7 +312,12 @@ class OpNode(BaseNode):
         self.triggered = triggered
         self._ordered_input_ports = ()
         self._named_input_ports = {}
-        self.set_inputs(*inputs[0], **inputs[1] or {})
+        if any(isinstance(node, BaseNode) for node in inputs):
+            positional_inputs = inputs
+            keyword_inputs = {}
+        else:
+            positional_inputs, keyword_inputs = inputs
+        self.set_inputs(*positional_inputs, **keyword_inputs)
         self._clear_dependents_data()
 
     def _fire(self):
