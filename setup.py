@@ -5,8 +5,13 @@ this distribution and at https://github.com/akaihola/lusmu/blob/master/LICENSE
 
 """
 
-
+import os
 from setuptools import setup
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.rst')) as f:
+    README = f.read()
 
 
 setup(name='lusmu',
@@ -16,6 +21,7 @@ setup(name='lusmu',
       author_email='antti.kaihola@eniram.fi',
       license='BSD',
       description='A dataflow/reactive programming library for Python',
+      long_description=README,
       keywords='eniram dataflow reactive',
       url='https://github.com/akaihola/lusmu',
       test_suite='nose.collector',
