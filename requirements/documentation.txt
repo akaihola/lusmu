@@ -1,6 +1,6 @@
 Jinja2==2.11.3
 MarkupSafe==0.18
-Pygments==2.7.4
+Pygments==2.15.0
 Sphinx==1.2b1
 cloud-sptheme==1.5
 docutils==0.11
