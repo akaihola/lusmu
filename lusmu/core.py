@@ -128,7 +128,7 @@ class BaseNode(object):
 
         """
         # test if neither, one of or both the old and the new value are DIRTY
-        dirty_count = len([v for v in value, self._value if v is DIRTY])
+        dirty_count = len([v for v in [value, self._value] if v is DIRTY])
         if dirty_count == 2:
             # both DIRTY, no need to touch anything
             return set()
